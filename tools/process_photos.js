@@ -1,6 +1,6 @@
 // Turns field-survey photos into web images + data/survey.js. macOS only, no installs.
 // Usage (from the project folder):
-//   osascript -l JavaScript tools/process_photos.js "$PWD" "Photo credit name"
+//   osascript -l JavaScript tools/process_photos.js "$PWD" ["Photo credit name", default Om Dorkar]
 // Reads   photos/originals/*.{jpg,jpeg,heic,png}  and optional photos/notes.csv (file,type,severity,note)
 // Writes  photos/web/<name>.jpg (1280px) and <name>-thumb.jpg (320px), both with all metadata removed,
 //         and data/survey.js. Existing type/severity/note values in data/survey.js are kept on re-runs.
@@ -68,7 +68,7 @@ function parseNotes(text){
 }
 
 function run(argv){
-  const root = argv[0], credit = argv[1] || "Field survey";
+  const root = argv[0], credit = argv[1] || "Om Dorkar";
   if (!root) return "Usage: osascript -l JavaScript tools/process_photos.js \"$PWD\" \"Photo credit name\"";
   const orig = root + "/photos/originals", web = root + "/photos/web", outJs = root + "/data/survey.js";
   $.NSFileManager.defaultManager.createDirectoryAtPathWithIntermediateDirectoriesAttributesError(web, true, $(), null);

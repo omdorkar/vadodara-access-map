@@ -2,7 +2,9 @@
 
 This is a one-page guide for the photo walk. These photos are the project's real evidence, so they matter more than anything else on the site.
 
-## Before you go
+## Before you go (one-time setup)
+- **OpenStreetMap account** (2 min): sign up at https://www.openstreetmap.org/user/new. After the walk, the kerbs and entrances you checked can be added to OSM under this name. Every edit is public and dated.
+- **Mapillary**: create an account at https://www.mapillary.com and install the Mapillary app. Run it during the walk (below).
 - **Turn on camera location.** iPhone: Settings → Privacy & Security → Location Services → Camera → "While Using". Android: Camera app settings → "Location tags" on.
 - Test it: take one photo, open it in Photos, swipe up. You should see a map. If there's no map, location is off.
 - Pick 2–3 streets in the study area (Alkapuri, Sayaji Baug, around the railway station). Aim for **20–30 photos**.
@@ -22,6 +24,12 @@ This is a one-page guide for the photo walk. These photos are the project's real
 For each barrier take **2 photos**: one **wide** (shows where it is) and one **close-up** (shows the problem). Stand where the barrier is, because the photo's GPS is where *you* are.
 
 **Severity** (use in notes): `high` = a wheelchair user cannot get past · `med` = possible but hard or unsafe · `low` = inconvenient.
+
+## Also: record the route with the Mapillary app
+Separately from the barrier photos, walk each street once with the **Mapillary app** in capture mode. Hold the phone upright at chest height, facing forward, or clip it to a bike. It takes a geotagged photo every few metres. Upload when you're back on Wi-Fi.
+- This gives hundreds of street-level images of the route. They show up on the map's green "Mapillary photos" layer by themselves.
+- It is the same idea as the University of Alberta's wheelchair-mounted camera, and later it is the raw material for training a barrier detector.
+- Mapillary publishes uploads under CC-BY-SA and blurs faces and number plates automatically.
 
 ## Privacy and safety
 - Shoot only from public footpaths. Don't go into private property.
@@ -44,9 +52,12 @@ Save it as `photos/notes.csv`. See `photos/notes-template.csv`.
 
 ## Then run (from the project folder)
 ```
-osascript -l JavaScript tools/process_photos.js "$PWD" "Om <surname>"
+osascript -l JavaScript tools/process_photos.js "$PWD"
 ```
 This makes web-sized copies with all phone metadata removed, puts each photo on the map at its GPS location, and lists any photos that have no location. Originals are never uploaded.
 
-## Optional: also upload to Mapillary
-Uploading the same photos through the Mapillary app makes them public street imagery (CC-BY-SA). That adds a second, independent public record of the survey.
+## After the walk: add what you saw to OpenStreetMap
+Open a barrier on the live map and tap **Add to OSM with MapComplete**. That opens the same spot in MapComplete OnWheels, where you can answer questions like "How high is this kerb?" or "Is there tactile paving?" while logged in with your OSM account.
+- Only add what you saw yourself on the ground.
+- Never copy from Google Maps or Street View.
+- Keep each session small.
