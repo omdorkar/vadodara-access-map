@@ -2,219 +2,338 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vadodara Access Map</title>
+<meta name="description" content="An open map of physical-mobility barriers in Alkapuri, Sayaji Baug and the railway station area of Vadodara, India.">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
-  :root { --bg:#fff; --fg:#1b1f23; --muted:#5b6670; --line:#d9dee3; --panel:#f6f8fa; --accent:#0b6e4f;
-          --high:#c62828; --med:#ef8f00; --low:#2e7d32; --gap:#7b3fbf; --mly:#05cb63; }
+  :root {
+    --bg:#ffffff; --fg:#1b1f23; --muted:#5b6670; --line:#dde2e7; --soft:#f3f5f7; --accent:#0b6e4f; --accent-fg:#ffffff;
+    --high:#c62828; --med:#e08600; --low:#2e7d32; --gap:#7b3fbf; --mly:#05a357;
+    --shadow:0 6px 24px rgba(16,24,32,.18), 0 1px 3px rgba(16,24,32,.12);
+    --radius:14px;
+  }
   @media (prefers-color-scheme: dark) {
-    :root { --bg:#14181c; --fg:#e8ecef; --muted:#9aa5ae; --line:#2b3238; --panel:#1b2127; --accent:#4cc9a0; }
+    :root { --bg:#161b20; --fg:#e8ecef; --muted:#9aa5ae; --line:#2c343b; --soft:#1e252b; --accent:#3fbf94; --accent-fg:#06281d;
+            --shadow:0 6px 24px rgba(0,0,0,.5); }
   }
   * { box-sizing:border-box; }
-  body { margin:0; font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--fg); }
-  header { padding:14px 16px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; justify-content:space-between; }
-  header h1 { margin:0; font-size:18px; }
-  header p { margin:0; color:var(--muted); font-size:13px; }
-  .badge { background:#fff3cd; color:#664d03; border:1px solid #ffe69c; border-radius:6px; padding:2px 8px; font-size:12px; }
-  main { display:grid; grid-template-columns:340px 1fr; height:calc(100vh - 66px); }
-  aside { border-right:1px solid var(--line); background:var(--panel); overflow-y:auto; padding:14px; }
-  #map { height:100%; min-height:420px; }
-  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:18px 0 8px; }
-  h2:first-child { margin-top:0; }
-  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
-  .stat { background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:8px 4px; text-align:center; }
-  .stat b { display:block; font-size:20px; }
-  .stat span { font-size:11px; color:var(--muted); }
-  label { display:block; font-size:13px; margin:8px 0 2px; }
-  select, input[type=text], textarea { width:100%; padding:7px 8px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); font:inherit; }
-  textarea { min-height:60px; resize:vertical; }
-  button { padding:8px 12px; border:0; border-radius:6px; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
-  button.ghost { background:transparent; color:var(--fg); border:1px solid var(--line); }
-  button.link { background:none; color:var(--accent); padding:0; text-decoration:underline; font-size:12px; }
-  button:disabled { opacity:.5; cursor:default; }
-  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-  .row { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-  .hint { font-size:12px; color:var(--muted); margin:6px 0 0; }
-  .status { font-size:12px; margin:6px 0 0; color:var(--fg); }
-  #picked, #linked { font-size:12px; color:var(--accent); margin-top:4px; }
-  .feed { list-style:none; padding:0; margin:0; }
-  .feed li { background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:6px; cursor:pointer; font-size:13px; }
-  .feed li small { color:var(--muted); display:block; }
-  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
-  .pin { width:16px; height:16px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.4); }
-  .pin.sample { opacity:.7; }
-  .pin.user { box-shadow:0 0 0 2px var(--accent); }
-  .pin.survey { width:18px; height:18px; border-radius:4px; box-shadow:0 0 0 2px #1b1f23; }
-  .legend { list-style:none; padding:0; margin:0; font-size:12px; }
-  .legend li { display:flex; align-items:center; gap:8px; margin:4px 0; }
-  .legend .pin { flex:none; }
-  .legend .sw { flex:none; width:16px; height:0; border-top:3px dashed var(--gap); }
-  .legend .mly { flex:none; width:12px; height:12px; border-radius:50%; background:var(--mly); border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.4); }
-  .popup img { width:100%; border-radius:6px; margin-bottom:6px; }
-  .popup .src { display:inline-block; font-size:11px; padding:1px 6px; border-radius:4px; background:#eef1f4; color:#333; margin-top:4px; }
-  .popup .src.sample { background:#fff3cd; color:#664d03; }
-  .popup .src.survey { background:#d1f2e4; color:#0b4d37; }
-  .popup .src.gap { background:#eadcf8; color:#4a2378; }
-  .popup button { margin-top:6px; padding:5px 10px; font-size:13px; }
-  .popup small { color:#5b6670; }
-  details { margin-top:12px; font-size:13px; }
-  details summary { cursor:pointer; font-weight:600; }
-  details p, details li { color:var(--muted); }
+  html, body { height:100%; }
+  body { margin:0; font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); overflow:hidden; }
+  a { color:var(--accent); }
+  #map { position:fixed; inset:0; background:#dfe6ea; }
+  .leaflet-container { font:inherit; }
+
+  /* Floating cards */
+  .card { position:absolute; z-index:1000; background:var(--bg); color:var(--fg); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .title-card { top:calc(12px + env(safe-area-inset-top, 0px)); left:12px; width:min(380px, calc(100vw - 24px)); padding:10px 10px 10px 12px; display:flex; gap:10px; align-items:center; }
+  .logo { flex:none; width:40px; height:40px; border-radius:10px; background:var(--accent); display:grid; place-items:center; }
+  .logo svg { width:26px; height:26px; }
+  .title-card h1 { margin:0; font-size:16px; line-height:1.2; }
+  .title-card .sub { font-size:12px; color:var(--muted); }
+  .title-card .sub b { color:var(--fg); }
+  .title-card .grow { flex:1; min-width:0; }
+  .icon-btn { flex:none; width:36px; height:36px; border-radius:10px; border:0; background:var(--soft); color:var(--fg); display:grid; place-items:center; cursor:pointer; }
+  .icon-btn svg { width:20px; height:20px; }
+
+  .fabs { position:absolute; z-index:1000; left:50%; transform:translateX(-50%); bottom:calc(22px + env(safe-area-inset-bottom, 0px)); display:flex; gap:10px; }
+  @media (max-width:420px) { .fab .lbl-long { display:none; } }
+  .fab { border:0; border-radius:999px; padding:12px 18px; font-family:inherit; font-size:15px; font-weight:600; line-height:1; display:flex; align-items:center; gap:8px; cursor:pointer; box-shadow:var(--shadow); background:var(--bg); color:var(--fg); white-space:nowrap; }
+  .fab svg { width:20px; height:20px; }
+  .fab.primary { background:var(--accent); color:var(--accent-fg); }
+  .locate { position:absolute; z-index:1000; right:12px; bottom:calc(110px + env(safe-area-inset-bottom, 0px)); width:40px; height:40px; border-radius:10px; }
+  .leaflet-bottom.leaflet-right { margin-bottom:env(safe-area-inset-bottom, 0px); }
+
+  /* Side panel / bottom sheet */
+  .sheet { position:absolute; z-index:1001; top:calc(12px + env(safe-area-inset-top, 0px)); right:12px; bottom:12px; width:400px; display:flex; flex-direction:column; overflow:hidden; }
+  .sheet-head { display:flex; justify-content:flex-end; padding:8px 8px 0; }
+  .sheet-body { overflow-y:auto; padding:0 18px 22px; flex:1; }
+  .sheet h2 { margin:0 0 4px; font-size:20px; line-height:1.25; display:flex; align-items:center; gap:10px; }
+  .sheet h3 { margin:20px 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .grab { display:none; }
+  body.placing .sheet, body.placing .fabs, body.placing .locate { display:none; }
+  @media (min-width:761px) { body.sheet-open .locate { right:424px; } }
   @media (max-width:760px) {
-    main { grid-template-columns:1fr; height:auto; }
-    aside { border-right:0; border-bottom:1px solid var(--line); }
-    #map { height:60vh; }
+    .sheet { top:auto; left:0; right:0; bottom:0; width:auto; max-height:78vh; border-radius:18px 18px 0 0; padding-bottom:env(safe-area-inset-bottom, 0px); }
+    .grab { display:block; width:40px; height:5px; border-radius:3px; background:var(--line); margin:8px auto 0; }
+    .sheet-head { padding-top:0; margin-top:-6px; }
+    body.sheet-open .fabs, body.sheet-open .locate { display:none; }
   }
+
+  .hero { margin:0 -18px 14px; background:var(--soft); }
+  .hero img { display:block; width:100%; max-height:280px; object-fit:cover; }
+  .hero figcaption { font-size:12px; color:var(--muted); padding:6px 18px; }
+  .chip { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:3px 9px; border-radius:999px; background:var(--soft); color:var(--fg); border:1px solid var(--line); }
+  .chip.survey { background:#d6f3e6; color:#0b4d37; border-color:#a9e3c9; }
+  .chip.sample { background:#fff3cd; color:#664d03; border-color:#ffe69c; }
+  .chip.user { background:#e3eefc; color:#163d73; border-color:#bcd3f5; }
+  .chip.gap { background:#efe4fb; color:#4a2378; border-color:#d8c3f2; }
+  .chip.mly { background:#d9f7e6; color:#0a5a33; border-color:#aee8c8; }
+  .rows { margin:12px 0 0; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .rows > div { display:flex; gap:12px; padding:10px 12px; border-top:1px solid var(--line); font-size:14px; }
+  .rows > div:first-child { border-top:0; }
+  .rows dt { flex:none; width:96px; color:var(--muted); font-size:13px; }
+  .rows dd { margin:0; flex:1; min-width:0; overflow-wrap:anywhere; }
+  .rows code, .tag { font:12px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:1px 5px; }
+  .sev { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:baseline; }
+  .note { font-size:13px; color:var(--muted); margin:10px 0 0; }
+  .callout { margin:14px 0 0; padding:12px; border-radius:12px; background:var(--soft); font-size:13px; }
+  .callout b { display:block; margin-bottom:2px; }
+  .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  .btn { border:1px solid var(--line); background:var(--bg); color:var(--fg); border-radius:10px; padding:9px 13px; font:inherit; font-size:14px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+  .btn.primary { background:var(--accent); color:var(--accent-fg); border-color:transparent; font-weight:600; }
+  .btn.danger { color:var(--high); }
+  .btn:disabled { opacity:.5; cursor:default; }
+  .btn.block { width:100%; justify-content:center; }
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, label:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+
+  /* Type picker */
+  .types { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .type { display:flex; flex-direction:column; align-items:flex-start; gap:8px; text-align:left; padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--bg); color:var(--fg); font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+  .type:hover { border-color:var(--accent); }
+  .type small { font-weight:400; color:var(--muted); font-size:12px; }
+  .type .ic { width:34px; height:34px; border-radius:50%; background:var(--accent); display:grid; place-items:center; }
+  .type .ic svg { width:20px; height:20px; }
+
+  /* Question cards */
+  .q { border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:12px; }
+  .q > b { display:block; margin-bottom:8px; }
+  .q .why { font-size:12px; color:var(--muted); margin:-4px 0 8px; }
+  .opt { display:flex; gap:10px; align-items:flex-start; padding:9px 10px; border-radius:10px; cursor:pointer; font-size:14px; }
+  .opt:hover { background:var(--soft); }
+  .opt input { margin-top:3px; accent-color:var(--accent); }
+  .opt small { display:block; color:var(--muted); font-size:12px; }
+  .q textarea { width:100%; min-height:70px; resize:vertical; padding:9px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); font:inherit; }
+  .q input[type=file] { font-size:13px; max-width:100%; }
+  .q input[type=text] { width:100%; padding:9px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); font:inherit; }
+
+  /* Layers panel */
+  .toggle { display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--line); cursor:pointer; font-size:14px; }
+  .toggle:last-child { border-bottom:0; }
+  .toggle .grow { flex:1; }
+  .toggle .count { color:var(--muted); font-size:13px; }
+  .toggle input { accent-color:var(--accent); width:18px; height:18px; }
+  .swatch { flex:none; width:22px; height:22px; display:grid; place-items:center; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chipbtn { border:1px solid var(--line); background:var(--bg); color:var(--fg); border-radius:999px; padding:6px 11px; font:inherit; font-size:13px; cursor:pointer; }
+  .chipbtn[aria-pressed=true] { background:var(--accent); color:var(--accent-fg); border-color:transparent; }
+  .bases { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .base { border:2px solid var(--line); border-radius:12px; padding:0; overflow:hidden; background:var(--soft); color:var(--fg); cursor:pointer; font:inherit; font-size:13px; font-weight:600; }
+  .base[aria-pressed=true] { border-color:var(--accent); }
+  .base span { display:block; height:54px; background-size:cover; background-position:center; }
+  .base div { padding:6px; }
+  .status { font-size:13px; margin:8px 0 0; color:var(--muted); }
+
+  /* Pins */
+  .pin { width:28px; height:28px; border-radius:50%; background:var(--c); border:2px solid #fff; display:grid; place-items:center; box-shadow:0 1px 4px rgba(0,0,0,.45); }
+  .pin svg { width:16px; height:16px; }
+  .pin.survey { border-radius:8px; box-shadow:0 0 0 2px #1b1f23, 0 2px 6px rgba(0,0,0,.4); }
+  .pin.user { box-shadow:0 0 0 3px var(--accent), 0 1px 4px rgba(0,0,0,.45); }
+  .pin.sample { opacity:.72; border-style:dashed; }
+
+  /* Placing a new point */
+  #crosshair { position:fixed; z-index:1000; left:50%; top:50%; width:40px; height:52px; margin:-52px 0 0 -20px; pointer-events:none; filter:drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
+  #crosshair::after { content:""; position:absolute; left:50%; bottom:-4px; width:10px; height:4px; margin-left:-5px; border-radius:50%; background:rgba(0,0,0,.35); }
+  .place-bar { left:50%; transform:translateX(-50%); bottom:calc(16px + env(safe-area-inset-bottom, 0px)); width:min(460px, calc(100vw - 24px)); padding:14px; }
+  .place-bar p { margin:0 0 10px; font-size:14px; }
+  .place-bar .actions { margin-top:0; }
+
+  /* Modal */
+  .backdrop { position:fixed; inset:0; z-index:1100; background:rgba(10,14,18,.5); display:grid; place-items:center; padding:16px; }
+  .modal { position:relative; width:min(680px, 100%); max-height:calc(100vh - 32px); overflow:auto; padding:22px; }
+  .modal h2 { margin:0 0 4px; font-size:22px; }
+  .tabs { display:flex; flex-wrap:wrap; gap:6px; margin:14px 0 4px; }
+  .tab-panel h3 { font-size:15px; margin:18px 0 6px; }
+  .tab-panel p, .tab-panel li { color:var(--fg); font-size:14px; }
+  .tab-panel li { margin:4px 0; }
+  .tab-panel .muted { color:var(--muted); }
+  .modal .x { position:absolute; top:12px; right:12px; }
+
+  #toast { position:fixed; z-index:1200; left:50%; transform:translateX(-50%); top:calc(80px + env(safe-area-inset-top, 0px)); background:#1b1f23; color:#fff; padding:10px 14px; border-radius:10px; font-size:14px; box-shadow:var(--shadow); max-width:calc(100vw - 32px); }
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+  [hidden] { display:none !important; }
 </style>
 </head>
 <body>
-<header>
-  <div>
+<div id="map" role="application" aria-label="Map of mobility barriers in Vadodara"></div>
+
+<header class="card title-card">
+  <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4.5" r="1.8"/><path d="M11 7.5v6h5l2.5 5"/><path d="M11 10.5h4.5"/><path d="M8 11.2a5 5 0 1 0 7 6.3"/></svg></div>
+  <div class="grow">
     <h1>Vadodara Access Map</h1>
-    <p>Mapping physical and mobility barriers in Alkapuri, Sayaji Baug and the railway station area.</p>
+    <div class="sub" id="stats">Loading…</div>
   </div>
-  <span class="badge">Demo: pins marked "Sample data" are illustrative, not surveyed</span>
+  <button class="icon-btn" id="aboutBtn" aria-label="About this project" title="About">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>
+  </button>
 </header>
 
-<main>
-<aside>
-  <h2>At a glance</h2>
-  <div class="stats">
-    <div class="stat"><b id="sSurvey">0</b><span>surveyed</span></div>
-    <div class="stat"><b id="sTotal">0</b><span>all pins</span></div>
-    <div class="stat"><b id="sHigh">0</b><span>high severity</span></div>
-    <div class="stat"><b id="sUser">0</b><span>added by you</span></div>
-  </div>
+<button class="card icon-btn locate" id="locateBtn" aria-label="Show my location" title="My location">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+</button>
 
-  <h2>Legend</h2>
-  <ul class="legend">
-    <li><span class="pin survey" style="background:#c62828"></span>Field survey: photo taken on site</li>
-    <li><span class="pin user" style="background:#c62828"></span>Added by you (this browser only)</li>
-    <li><span class="pin sample" style="background:#c62828"></span>Sample data (illustrative, not real)</li>
-    <li><span class="mly"></span>Mapillary street photo (not yet reviewed)</li>
-    <li><span class="sw"></span>OSM possible gap (unverified)</li>
-  </ul>
-  <p class="hint">Colour = severity: red high, orange medium, green low. Use the layer button on the map to switch to satellite view.</p>
+<div class="fabs">
+  <button class="fab" id="layersBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>Layers<span class="lbl-long">&nbsp;&amp; filters</span>
+  </button>
+  <button class="fab primary" id="addBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Report a barrier
+  </button>
+</div>
 
-  <h2>Filter</h2>
-  <label for="fCat">Barrier type</label>
-  <select id="fCat"></select>
-  <label for="fSev">Severity</label>
-  <select id="fSev">
-    <option value="">All</option><option value="high">High (blocks access)</option>
-    <option value="med">Medium (difficult)</option><option value="low">Low (inconvenient)</option>
-  </select>
-  <label for="fSrc">Source</label>
-  <select id="fSrc">
-    <option value="">All sources</option><option value="survey">Field survey only</option>
-    <option value="user">Added by you</option><option value="sample">Sample data</option>
-  </select>
-
-  <h2>Street-level photos</h2>
-  <p class="hint">Real geotagged photos from <a href="https://www.mapillary.com/app/?lat=22.310&lng=73.180&z=15" target="_blank" rel="noopener">Mapillary</a> (CC-BY-SA 4.0). Zoom in to street level, then load.</p>
-  <div id="mlyTokenRow" hidden>
-    <label for="mlyToken">Mapillary client token</label>
-    <input type="text" id="mlyToken" placeholder="MLY|..." autocomplete="off">
-  </div>
-  <div class="row"><button class="ghost" id="mlyBtn">Load photos in view</button></div>
-  <p class="status" id="mlyStatus" aria-live="polite"></p>
-
-  <h2>OpenStreetMap check</h2>
-  <p class="hint">Finds footways and crossings in the study area that are missing kerb, wheelchair or tactile-paving tags. A missing tag means the data is missing, not that a barrier has been confirmed.</p>
-  <div class="row"><button class="ghost" id="ovBtn">Check OSM tags</button></div>
-  <p class="status" id="ovStatus" aria-live="polite"></p>
-
-  <h2>Report a barrier</h2>
-  <p class="hint">1. Click the map, or use "Mark as barrier" on a street photo. 2. Fill in the details. 3. Submit.</p>
-  <div id="picked">No location picked yet.</div>
-  <div id="linked" hidden></div>
-  <label for="rCat">Barrier type</label>
-  <select id="rCat"></select>
-  <label for="rSev">Severity</label>
-  <select id="rSev">
-    <option value="high">High (blocks access)</option><option value="med" selected>Medium (difficult)</option><option value="low">Low (inconvenient)</option>
-  </select>
-  <label for="rDesc">What did you see?</label>
-  <textarea id="rDesc" placeholder="e.g. Ramp is cracked and too steep for a wheelchair"></textarea>
-  <label for="rPhoto">Your own photo (optional)</label>
-  <input type="file" id="rPhoto" accept="image/*">
-  <div class="row">
-    <button id="submit">Submit report</button>
-    <button class="ghost" id="exportBtn">Export JSON</button>
-    <button class="ghost" id="clearBtn">Clear mine</button>
-  </div>
-  <p class="hint">Your reports are saved only in this browser. Use Export JSON to share them.</p>
-
-  <h2>Recent activity</h2>
-  <ul class="feed" id="feed"></ul>
-
-  <details>
-    <summary>About this project</summary>
-    <p>Vadodara Access Map is a free, open-source map of physical-mobility barriers (broken or missing ramps, blocked footpaths, missing kerb cuts, no tactile paving, steps with no alternative) in one small area of Vadodara: Alkapuri, Sayaji Baug and the railway station. It was inspired by the University of Alberta Mobility Mapping Project, which uses camera and GPS data to flag barriers like these.</p>
-    <ul>
-      <li><b>Phase 1 (now):</b> a map, a field survey with geotagged photos, and crowdsourced reports.</li>
-      <li><b>Phase 2:</b> shared storage so everyone sees each other's reports, and contributing verified kerb and tactile-paving tags back to OpenStreetMap.</li>
-      <li><b>Phase 3:</b> a small ramp/obstacle detector, trained only on photos whose licence allows it.</li>
-    </ul>
-  </details>
-  <details>
-    <summary>Methodology</summary>
-    <ul>
-      <li><b>Field survey:</b> photos taken on foot from public footpaths with phone GPS on. Location comes from the photo's GPS data. Type, severity and note are recorded by the surveyor on site.</li>
-      <li><b>Severity:</b> High = blocks a wheelchair user; Medium = possible but difficult or unsafe; Low = inconvenient.</li>
-      <li><b>Mapillary photos</b> are other people's street imagery. They are shown as context and only become reports when someone marks a barrier in them.</li>
-      <li><b>OSM check</b> compares mapped footways and crossings against the OpenStreetMap tags <code>kerb</code>, <code>wheelchair</code> and <code>tactile_paving</code>.</li>
-    </ul>
-  </details>
-  <details>
-    <summary>Limitations</summary>
-    <ul>
-      <li>Sample pins are invented examples placed at approximate spots. They are labelled and are not findings.</li>
-      <li>"Added by you" reports stay in your browser until exported. There is no shared database yet.</li>
-      <li>Very few footways and crossings in this area are mapped in OpenStreetMap, so the OSM check mostly shows missing data, not missing ramps.</li>
-      <li>Satellite imagery cannot show a broken ramp. It is context only.</li>
-      <li>Phone GPS can be off by 5–15 m.</li>
-      <li>The survey covers a few streets, not the whole city.</li>
-    </ul>
-  </details>
-  <details>
-    <summary>Data sources &amp; credits</summary>
-    <ul>
-      <li>Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> (ODbL).</li>
-      <li>Satellite imagery &copy; Esri, Maxar, Earthstar Geographics and the GIS User Community (display only).</li>
-      <li>Street-level photos via Mapillary, CC-BY-SA 4.0. Each photo credits its author.</li>
-      <li>Field survey photos: credited on each pin, CC-BY-SA 4.0.</li>
-      <li>Code MIT, survey data CC-BY-SA 4.0. See the project's DATA_SOURCES.md.</li>
-    </ul>
-  </details>
+<aside class="card sheet" id="panel" hidden aria-label="Details">
+  <div class="grab" aria-hidden="true"></div>
+  <div class="sheet-head"><button class="icon-btn" data-act="close" aria-label="Close panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body" id="panelBody"></div>
 </aside>
-<div id="map" role="application" aria-label="Map of reported barriers in Vadodara"></div>
-</main>
+
+<svg id="crosshair" hidden viewBox="0 0 40 52" aria-hidden="true"><path d="M20 51C20 51 38 30 38 18A18 18 0 0 0 2 18c0 12 18 33 18 33z" fill="#0b6e4f" stroke="#fff" stroke-width="2.5"/><circle cx="20" cy="18" r="6.5" fill="#fff"/></svg>
+<div class="card place-bar" id="placeBar" hidden>
+  <p><b>Move the map</b> so the pin sits exactly on the barrier. Zoom in for accuracy.</p>
+  <div class="actions">
+    <button class="btn primary" id="placeOk">Confirm location</button>
+    <button class="btn" id="placeMe">Use my location</button>
+    <button class="btn" id="placeCancel">Cancel</button>
+  </div>
+</div>
+
+<div class="backdrop" id="about" hidden>
+  <div class="card modal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <button class="icon-btn x" data-close-about aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h2 id="aboutTitle">Vadodara Access Map</h2>
+    <p class="muted" style="margin:0;color:var(--muted)">An open map of physical-mobility barriers in Alkapuri, Sayaji Baug and the railway station area.</p>
+    <div class="tabs" role="tablist">
+      <button class="chipbtn" role="tab" data-tab="t-about" aria-pressed="true">About</button>
+      <button class="chipbtn" role="tab" data-tab="t-why" aria-pressed="false">Why Vadodara</button>
+      <button class="chipbtn" role="tab" data-tab="t-method" aria-pressed="false">Method</button>
+      <button class="chipbtn" role="tab" data-tab="t-limits" aria-pressed="false">Limitations</button>
+      <button class="chipbtn" role="tab" data-tab="t-sources" aria-pressed="false">Sources &amp; licences</button>
+    </div>
+    <section class="tab-panel" id="t-about">
+      <p>Broken or missing ramps, high kerbs, blocked footpaths and steps with no alternative make it hard or impossible for wheelchair users, older people and parents with prams to get around. This map records those barriers street by street, with a photo and an exact location, so anyone can check them and the city can fix them.</p>
+      <h3>How to use it</h3>
+      <ul>
+        <li>Tap a pin to see the photo and details. Square pins come from the field survey.</li>
+        <li><b>Report a barrier</b>: pick the type, place the pin, answer a few short questions.</li>
+        <li><b>Layers &amp; filters</b>: satellite view, street-level photos, OpenStreetMap gaps, and filters by type and severity.</li>
+      </ul>
+      <h3>Roadmap</h3>
+      <ul>
+        <li><b>Now:</b> field survey with geotagged photos, plus crowdsourced reports.</li>
+        <li><b>Next:</b> shared storage so everyone sees each other's reports. Verified kerb and tactile-paving data added to OpenStreetMap, where every map app can use it.</li>
+        <li><b>Later:</b> a small ramp/obstacle detector, trained only on photos whose licence allows it.</li>
+      </ul>
+      <p class="muted" style="color:var(--muted)">Built by Om Dorkar. Open source on <a href="https://github.com/omdorkar/vadodara-access-map" target="_blank" rel="noopener">GitHub</a>.</p>
+    </section>
+    <section class="tab-panel" id="t-why" hidden>
+      <p>Local news has reported for years that the city is hard to get around for people with disabilities:</p>
+      <ul>
+        <li><b>"Vadodara's buildings are not disabled-friendly"</b>, <i>Times of India</i>, 24 July 2014. RTI replies showed that most buildings in the district lacked ramps, accessible lifts, parking, toilets and signage.</li>
+        <li><b>"City yet to adapt to needs of the disabled"</b>, <i>Times of India</i>, 4 July 2014. Apart from the collector's office, public buildings and places remained difficult to access, despite repeated petitions.</li>
+        <li><a href="https://deshgujarat.com/2022/11/03/motorised-stair-climber-wheelchair-facility-at-vadodara-station/" target="_blank" rel="noopener"><b>Motorised stair-climber wheelchairs launched at Vadodara station</b></a>, <i>DeshGujarat</i>, 3 November 2022. This is a welcome step, but it was needed because lifts and escalators could not be provided on the other platforms.</li>
+      </ul>
+      <p>Those reports are years old. This project asks: <b>what is it like today, street by street?</b></p>
+      <p>The method is inspired by the University of Alberta's <a href="https://www.ualberta.ca/en/folio/2025/04/overcoming-obstacles.html" target="_blank" rel="noopener">Atlas / Click&amp;Push</a> work, which combines crowdsourced barrier reports with camera and GPS data. The question design follows OpenStreetMap accessibility tagging, as used by <a href="https://mapcomplete.org/onwheels" target="_blank" rel="noopener">MapComplete OnWheels</a>. This is a small, student-led project for one area of Vadodara.</p>
+    </section>
+    <section class="tab-panel" id="t-method" hidden>
+      <ul>
+        <li><b>Field survey:</b> photos taken on foot from public footpaths with phone GPS on. Location comes from the photo. Type, severity and notes are recorded on site.</li>
+        <li><b>Severity:</b> High = a wheelchair user cannot pass. Medium = possible but difficult or unsafe. Low = inconvenient.</li>
+        <li><b>OpenStreetMap-ready answers:</b> where a standard tag exists (<span class="tag">kerb</span>, <span class="tag">tactile_paving</span>, <span class="tag">wheelchair</span>, <span class="tag">lit</span>), the answer is stored as that tag. Verified points can then be added to OpenStreetMap.</li>
+        <li><b>Street-level photos</b> come from Mapillary. They are context until someone marks a barrier in one.</li>
+        <li><b>OSM gaps</b> are mapped footways and crossings with no kerb, wheelchair or tactile-paving tags. That means unknown, not confirmed bad.</li>
+      </ul>
+    </section>
+    <section class="tab-panel" id="t-limits" hidden>
+      <ul>
+        <li><b>Sample data</b> pins (dashed, faded) are invented examples at approximate spots. They are not findings, and they are hidden automatically once real survey data is in.</li>
+        <li>Reports you add are stored only in your browser until exported. There is no shared database yet.</li>
+        <li>Very few footways in this area are mapped in OpenStreetMap (26 footway ways when checked, none with accessibility tags).</li>
+        <li>Satellite imagery cannot show the condition of a ramp. It is context only.</li>
+        <li>Phone GPS can be off by 5–15 m. The survey covers a few streets, not the whole city.</li>
+      </ul>
+    </section>
+    <section class="tab-panel" id="t-sources" hidden>
+      <ul>
+        <li>Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL. The OSM gap layer is derived from it and stays ODbL.</li>
+        <li>Satellite imagery &copy; Esri, Maxar, Earthstar Geographics and the GIS User Community. Display only.</li>
+        <li>Street-level photos via <a href="https://www.mapillary.com" target="_blank" rel="noopener">Mapillary</a>, CC-BY-SA 4.0, credited to each author.</li>
+        <li>Field survey photos and data: CC-BY-SA 4.0, credited on each pin. Code: MIT.</li>
+        <li>No Google Maps, Earth or Street View imagery is used.</li>
+        <li>Source code: <a href="https://github.com/omdorkar/vadodara-access-map" target="_blank" rel="noopener">github.com/omdorkar/vadodara-access-map</a></li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="data/survey.js"></script>
 <script>
-// Paste a Mapillary client token here (it is designed for public browser use), or enter it in the sidebar.
+// Paste a Mapillary client token here (it is designed for public browser use), or enter it under Layers & filters.
 const MAPILLARY_TOKEN = "";
 
+// ---------- Vocabulary ----------
 const CATS = {
-  broken_ramp: "Broken ramp",
-  missing_ramp: "Missing ramp / curb cut",
-  obstacle: "Obstacle on footpath",
-  uneven: "Damaged or uneven footpath",
-  no_tactile: "No tactile paving",
-  stairs_only: "Entrance with stairs only",
-  lighting: "Poor lighting"
+  missing_ramp: { label:"Missing ramp / kerb cut", hint:"High kerb, no dropped kerb" },
+  broken_ramp:  { label:"Broken ramp", hint:"Cracked, too steep, ends in a step" },
+  obstacle:     { label:"Blocked footpath", hint:"Vehicles, carts, signs, poles" },
+  uneven:       { label:"Damaged footpath", hint:"Broken slabs, open drains" },
+  no_tactile:   { label:"No tactile paving", hint:"Missing or broken guide tiles" },
+  stairs_only:  { label:"Steps only", hint:"Entrance with no ramp" },
+  lighting:     { label:"Poor lighting", hint:"Dark footpath or underpass" }
 };
-const SEV_HEX = { high:"#c62828", med:"#ef8f00", low:"#2e7d32" };
-const SEV_LABEL = { high:"High", med:"Medium", low:"Low" };
-const SRC_LABEL = { survey:"Field survey", user:"Added by you", sample:"Sample data" };
+const SEV = {
+  high: { label:"High", hint:"A wheelchair user cannot pass", hex:"#c62828" },
+  med:  { label:"Medium", hint:"Possible but difficult or unsafe", hex:"#e08600" },
+  low:  { label:"Low", hint:"Inconvenient", hex:"#2e7d32" }
+};
+const SRC = { survey:"Field survey", user:"Your report", sample:"Sample data" };
+const OSM_KEYS = ["kerb","tactile_paving","wheelchair","lit"];
+
+// One follow-up question per type. Where OpenStreetMap has a standard tag, the answer is stored as that tag.
+const QUESTIONS = {
+  missing_ramp: { key:"kerb", q:"How high is the kerb?", opts:[
+    ["raised","Raised","More than about 3 cm. A wheelchair cannot roll over it."],
+    ["lowered","Lowered","About 3 cm. Passable, but it's a bump."],
+    ["flush","Flush","Level with the road, but something else blocks access."]] },
+  broken_ramp: { key:"issue", q:"What's wrong with the ramp?", opts:[
+    ["damaged","Cracked or crumbling",""],["too_steep","Too steep",""],["step_at_end","Ends in a step or gap",""],["blocked","Blocked by something",""]] },
+  obstacle: { key:"issue", q:"What is blocking the footpath?", opts:[
+    ["parked_vehicles","Parked vehicles",""],["vendors","Vendor stall or cart",""],["signboard","Sign or advertising board",""],
+    ["pole_tree","Pole, tree or electrical box",""],["construction","Construction or debris",""]] },
+  uneven: { key:"issue", q:"What kind of damage?", opts:[
+    ["broken_slabs","Broken or raised slabs",""],["open_drain","Open or missing drain cover",""],["height_change","Sudden step or height change",""],["potholes","Potholes or loose surface",""]] },
+  no_tactile: { key:"tactile_paving", q:"Is there tactile paving?", opts:[
+    ["no","None","No guide tiles where they are needed."],["incorrect","Present but broken or wrong","Damaged, blocked, or leads somewhere unsafe."]] },
+  stairs_only: { key:"wheelchair", q:"Can a wheelchair user get in at all?", opts:[
+    ["no","No","Steps only, no ramp or lift."],["limited","With help","One step, or a portable ramp on request."]] },
+  lighting: { key:"lit", q:"Is there street lighting?", opts:[
+    ["no","No lights",""],["broken","Lights present but not working","Not an OSM value; recorded as a note."]] }
+};
+
+// ---------- Icons (drawn for this project) ----------
+const ICON_PATHS = {
+  missing_ramp:'<path d="M3 18h7v-6h11"/><path d="M14 8l4 4m0-4l-4 4"/>',
+  broken_ramp:'<path d="M3 18h18v-9z"/><path d="M12 13l1.5 2-1 1.5"/>',
+  obstacle:'<path d="M12 4l-4.5 14h9z"/><path d="M5 18h14M9.4 12h5.2"/>',
+  uneven:'<path d="M3 16l4-3 3 2.5 4-4.5 3 2.5 4-3"/><path d="M3 20h18"/>',
+  no_tactile:'<circle cx="7" cy="7" r="1.3"/><circle cx="12" cy="7" r="1.3"/><circle cx="17" cy="7" r="1.3"/><circle cx="7" cy="12" r="1.3"/><circle cx="17" cy="12" r="1.3"/><circle cx="7" cy="17" r="1.3"/><circle cx="12" cy="17" r="1.3"/><circle cx="17" cy="17" r="1.3"/><path d="M4 20L20 4"/>',
+  stairs_only:'<path d="M3 20h4v-4h4v-4h4v-4h4V4"/>',
+  lighting:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/>',
+  unknown:'<path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/>',
+  camera:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  gap:'<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.01"/>'
+};
+const icon = (k, color="#fff") => '<svg viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON_PATHS[k]||ICON_PATHS.unknown)+'</svg>';
+
+// ---------- Data ----------
 const STUDY = L.latLngBounds([22.298,73.160],[22.322,73.200]);
 
 // Approximate locations; descriptions are illustrative sample data.
 const SAMPLE = [
-  [22.3107,73.1816,"missing_ramp","high","Railway station approach has no ramp or curb cut at the drop-off kerb."],
+  [22.3107,73.1816,"missing_ramp","high","Railway station approach has no ramp or kerb cut at the drop-off kerb."],
   [22.3100,73.1930,"obstacle","high","Parked two-wheelers block the footpath outside the bus stand."],
   [22.3125,73.1913,"uneven","med","Paving slabs near Sayaji Baug entrance are cracked and raised."],
   [22.2975,73.1915,"stairs_only","med","Side entrance to the palace grounds is stairs only."],
@@ -230,162 +349,238 @@ const SAMPLE = [
   [22.3140,73.1790,"uneven","low","Tree roots lifting the pavement near a Sayajigunj garden."],
   [22.3085,73.1750,"no_tactile","low","Bank entrance in Alkapuri has no tactile guide path."],
   [22.3180,73.1960,"missing_ramp","med","Hospital road crossing has no dropped kerb."]
-].map((r,i)=>({id:"s"+i,lat:r[0],lng:r[1],cat:r[2],sev:r[3],desc:r[4],ts:Date.now()-(i+1)*3600e3*7,src:"sample"}));
+].map((r,i)=>({id:"s"+i,lat:r[0],lng:r[1],cat:r[2],sev:r[3],desc:r[4],ts:0,src:"sample"}));
 
-// Field-survey records from data/survey.js (generated by tools/process_photos.sh). Only records with a location are shown.
+// Field-survey records from data/survey.js (generated by tools/process_photos.js). Only records with a location are shown.
 const SURVEY = (Array.isArray(window.SURVEY) ? window.SURVEY : [])
   .filter(r => typeof r.lat === "number" && typeof r.lng === "number")
-  .map((r,i) => ({ id:"v"+i, ...r, cat: CATS[r.cat] ? r.cat : "", sev: SEV_HEX[r.sev] ? r.sev : "", src:"survey", ts: r.ts || 0 }));
+  .map((r,i) => ({ id:"v"+i, ...r, cat: CATS[r.cat] ? r.cat : "", sev: SEV[r.sev] ? r.sev : "", src:"survey", ts: r.ts || 0 }));
 
 function lsGet(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : v; } catch(e){ return d; } }
 function lsSet(k, v){ try { localStorage.setItem(k, v); return true; } catch(e){ return false; } }
 const store = {
   load(){ try { return JSON.parse(lsGet("vam_user","[]")).map(r => ({...r, src:"user"})); } catch(e){ return []; } },
-  save(a){ if (!lsSet("vam_user", JSON.stringify(a))) alert("Could not save (storage full or blocked). Try a smaller photo."); }
+  save(a){ if (!lsSet("vam_user", JSON.stringify(a))) toast("Could not save: browser storage is full or blocked. Try a smaller photo."); }
 };
 let userReports = store.load();
+const allRecords = () => [...SURVEY, ...userReports, ...SAMPLE];
 
 const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeUrl = u => /^(https:\/\/|photos\/|data:image\/)/.test(String(u||"")) ? esc(u) : "";
+const fmtDate = ts => ts ? new Date(ts).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}) : "";
+const coords = (lat,lng) => lat.toFixed(5)+", "+lng.toFixed(5);
+const osmLink = (lat,lng) => "https://www.openstreetmap.org/?mlat="+lat.toFixed(6)+"&mlon="+lng.toFixed(6)+"#map=19/"+lat.toFixed(6)+"/"+lng.toFixed(6);
+const mcLink = (lat,lng) => "https://mapcomplete.org/onwheels?z=19&lat="+lat.toFixed(6)+"&lon="+lng.toFixed(6);
+const mlyLink = id => "https://www.mapillary.com/app/?pKey="+encodeURIComponent(id);
 
-for (const [k,v] of Object.entries(CATS)) {
-  $("rCat").add(new Option(v,k));
-  $("fCat").add(new Option(v,k));
-}
-$("fCat").insertBefore(new Option("All types",""), $("fCat").firstChild);
-$("fCat").value = "";
+let toastTimer = null;
+function toast(msg){ const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ t.hidden = true; }, 3800); }
 
-// ---- Map, base layers and overlays ----
-const map = L.map("map").setView([22.310,73.180], 14);
-const street = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
-const satellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-  maxZoom:19, attribution:"Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community" });
-
-const layer = L.layerGroup().addTo(map);
+// ---------- Map ----------
+const map = L.map("map", { zoomControl:false }).setView([22.310,73.180], 15);
+L.control.zoom({ position:"bottomright" }).addTo(map);
+const BASES = {
+  street: L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }),
+  satellite: L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom:19, attribution:"Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community" })
+};
+let base = "street"; BASES.street.addTo(map);
+const reportLayer = L.layerGroup().addTo(map);
 const mlyLayer = L.layerGroup().addTo(map);
 const gapLayer = L.layerGroup().addTo(map);
 const studyLayer = L.rectangle(STUDY, { color:"#0b6e4f", weight:2, dashArray:"6 6", fill:false, interactive:false }).addTo(map);
-L.control.layers(
-  { "Street map": street, "Satellite": satellite },
-  { "Barrier reports": layer, "Mapillary photos": mlyLayer, "OSM possible gaps": gapLayer, "Study area": studyLayer }
-).addTo(map);
 
-let picked = null, pickMarker = null, linkedPhoto = null;
+const state = {
+  // Sample pins only show while there is no real survey data; they can still be switched on under Layers.
+  src: { survey:true, user:true, sample: SURVEY.length === 0 },
+  types: new Set(Object.keys(CATS)),
+  sevs: new Set(Object.keys(SEV)),
+  overlays: { mly:true, gaps:true, study:true },
+  mlyCount: 0, mlyStatus: "", gapCount: 0, ovStatus: ""
+};
 
-function setPicked(latlng){
-  picked = latlng;
-  if (pickMarker) pickMarker.setLatLng(picked); else pickMarker = L.marker(picked).addTo(map);
-  $("picked").textContent = "Location picked: " + picked.lat.toFixed(5) + ", " + picked.lng.toFixed(5);
+function pinIcon(r){
+  return L.divIcon({ className:"", iconSize:[28,28], iconAnchor:[14,14],
+    html:'<div class="pin '+r.src+'" style="--c:'+(SEV[r.sev] ? SEV[r.sev].hex : "#6b7680")+'">'+icon(r.cat||"unknown")+'</div>' });
 }
-function setLinked(p){
-  linkedPhoto = p;
-  $("linked").hidden = !p;
-  $("linked").innerHTML = p ? 'Linked Mapillary photo by '+esc(p.creator)+' <button class="link" id="unlink">remove</button>' : "";
-  if (p) $("unlink").onclick = () => setLinked(null);
-}
-map.on("click", e => { setPicked(e.latlng); setLinked(null); });
-
-// ---- Barrier pins ----
-function icon(r){
-  return L.divIcon({ className:"", iconSize:[18,18], iconAnchor:[9,9],
-    html:'<div class="pin '+r.src+'" style="background:'+(SEV_HEX[r.sev]||"#777")+'"></div>' });
-}
-function mlyLink(id){ return "https://www.mapillary.com/app/?pKey="+encodeURIComponent(id); }
-function popup(r){
-  let img = "", credit = "";
-  if (r.src === "survey" && r.photo) {
-    img = '<a href="'+safeUrl(r.photo)+'" target="_blank" rel="noopener"><img src="'+safeUrl(r.thumb||r.photo)+'" alt="Field survey photo of the barrier"></a>';
-    credit = '<br><small>Photo: '+esc(r.credit||"Field survey")+(r.license?', '+esc(r.license):'')+'</small>';
-  } else if (r.photo) {
-    img = '<img src="'+safeUrl(r.photo)+'" alt="Photo of reported barrier">';
-  }
-  if (r.mly) {
-    img = img || (r.mly.thumb ? '<img src="'+safeUrl(r.mly.thumb)+'" alt="Mapillary street photo">' : "");
-    credit += '<br><small>Photo: <a href="'+mlyLink(r.mly.id)+'" target="_blank" rel="noopener">'+esc(r.mly.creator)+' via Mapillary</a>, CC-BY-SA 4.0</small>';
-  }
-  const when = r.ts ? ' &middot; '+new Date(r.ts).toLocaleString() : "";
-  return '<div class="popup">'+img+
-    '<b>'+esc(CATS[r.cat]||"Type not recorded")+'</b><br>Severity: '+(SEV_LABEL[r.sev]||"not recorded")+'<br>'+esc(r.desc||"(no description)")+
-    credit+'<br><span class="src '+r.src+'">'+SRC_LABEL[r.src]+'</span><small>'+when+'</small></div>';
-}
-
+const markers = {};
 function render(){
-  const all = [...SURVEY, ...userReports, ...SAMPLE];
-  const fc = $("fCat").value, fs = $("fSev").value, fsrc = $("fSrc").value;
-  const shown = all.filter(r => (!fc||r.cat===fc) && (!fs||r.sev===fs) && (!fsrc||r.src===fsrc));
-  layer.clearLayers();
-  const markers = {};
-  shown.forEach(r => { markers[r.id] = L.marker([r.lat,r.lng],{icon:icon(r), zIndexOffset: r.src==="survey"?500:0}).bindPopup(popup(r)).addTo(layer); });
-
-  $("sSurvey").textContent = SURVEY.length;
-  $("sTotal").textContent = all.length;
-  $("sHigh").textContent = all.filter(r=>r.sev==="high").length;
-  $("sUser").textContent = userReports.length;
-
-  const feed = $("feed"); feed.innerHTML = "";
-  [...shown].sort((a,b)=>b.ts-a.ts).slice(0,8).forEach(r => {
-    const li = document.createElement("li");
-    li.innerHTML = '<span class="dot" style="background:'+(SEV_HEX[r.sev]||"#777")+'"></span><b>'+esc(CATS[r.cat]||"Type not recorded")+'</b><small>'+SRC_LABEL[r.src]+' &middot; '+esc(r.desc||"")+'</small>';
-    li.onclick = () => { map.setView([r.lat,r.lng],17); markers[r.id].openPopup(); };
-    feed.appendChild(li);
-  });
+  reportLayer.clearLayers();
+  for (const k in markers) delete markers[k];
+  allRecords().filter(r => state.src[r.src] && (!r.cat || state.types.has(r.cat)) && (!r.sev || state.sevs.has(r.sev)))
+    .forEach(r => {
+      markers[r.id] = L.marker([r.lat,r.lng], { icon:pinIcon(r), zIndexOffset: r.src==="survey" ? 600 : r.src==="user" ? 300 : 0,
+        title: (CATS[r.cat] ? CATS[r.cat].label : "Barrier")+" ("+SRC[r.src]+")", keyboard:true })
+        .on("click", () => showFeature(r)).addTo(reportLayer);
+    });
+  $("stats").innerHTML = '<b>'+SURVEY.length+'</b> surveyed &middot; <b>'+userReports.length+'</b> yours &middot; '+SAMPLE.length+' sample';
 }
 
-// ---- Mapillary street photos ----
-function mlyToken(){ return MAPILLARY_TOKEN || $("mlyToken").value.trim(); }
-if (!MAPILLARY_TOKEN) { $("mlyTokenRow").hidden = false; $("mlyToken").value = lsGet("vam_mly",""); }
+// ---------- Panel ----------
+const panel = $("panel"), panelBody = $("panelBody");
+let current = null;   // what the panel is showing: {kind, ...}
+function openPanel(html, ctx, keepScroll){
+  const top = panelBody.scrollTop;
+  panelBody.innerHTML = html; current = ctx || null;
+  panel.hidden = false; document.body.classList.add("sheet-open");
+  panelBody.scrollTop = keepScroll ? top : 0;
+}
+function closePanel(){ panel.hidden = true; document.body.classList.remove("sheet-open"); current = null; }
+map.on("click", () => { if (!document.body.classList.contains("placing")) closePanel(); });
 
-$("mlyBtn").onclick = async () => {
-  const token = mlyToken(), st = $("mlyStatus");
-  if (!token) { st.textContent = "Enter a Mapillary client token first (free from mapillary.com/dashboard/developers)."; return; }
+function hero(src, alt, caption, href){
+  if (!src) return "";
+  const img = '<img src="'+safeUrl(src)+'" alt="'+esc(alt)+'" loading="lazy">';
+  return '<figure class="hero">'+(href ? '<a href="'+safeUrl(href)+'" target="_blank" rel="noopener">'+img+'</a>' : img)+
+    (caption ? '<figcaption>'+caption+'</figcaption>' : '')+'</figure>';
+}
+function answerText(r){
+  if (!r.tags) return "";
+  return Object.entries(r.tags).map(([k,v]) => {
+    const q = QUESTIONS[r.cat]; const o = q && q.key === k ? q.opts.find(o => o[0] === v) : null;
+    return esc(o ? o[1] : v);
+  }).join(", ");
+}
+function osmTags(r){ return r.tags ? Object.entries(r.tags).filter(([k,v]) => OSM_KEYS.includes(k) && v !== "broken") : []; }
+
+function showFeature(r){
+  const cat = CATS[r.cat], sev = SEV[r.sev];
+  let photo = "";
+  if (r.src === "survey" && r.photo) photo = hero(r.thumb || r.photo, "Field survey photo of the barrier", "Photo: "+esc(r.credit||"Field survey")+(r.license ? " &middot; "+esc(r.license) : ""), r.photo);
+  else if (r.photo) photo = hero(r.photo, "Photo of the reported barrier", "Your photo (stored in this browser only)");
+  else if (r.mly && r.mly.thumb) photo = hero(r.mly.thumb, "Mapillary street photo", '&copy; '+esc(r.mly.creator)+' via Mapillary &middot; CC-BY-SA 4.0', mlyLink(r.mly.id));
+  const tags = osmTags(r);
+  const rows = [
+    ['Severity', sev ? '<span class="sev" style="background:'+sev.hex+'"></span><b>'+sev.label+'</b> &middot; '+sev.hint : '<span class="note" style="margin:0">Not recorded yet</span>'],
+    answerText(r) ? ['Details', answerText(r)] : null,
+    ['Note', r.desc ? esc(r.desc) : '<span style="color:var(--muted)">No note</span>'],
+    r.ts ? ['Recorded', fmtDate(r.ts)] : null,
+    ['Location', coords(r.lat,r.lng)+(r.placed==="manual" ? ' <small style="color:var(--muted)">(placed by hand)</small>' : '')],
+    tags.length ? ['OSM tags', tags.map(([k,v]) => '<code>'+esc(k)+'='+esc(v)+'</code>').join(" ")] : null,
+    r.mly && !(r.photo) ? ['Photo', '<a href="'+mlyLink(r.mly.id)+'" target="_blank" rel="noopener">'+esc(r.mly.creator)+' via Mapillary</a>'] : null
+  ].filter(Boolean);
+  const callout = r.src === "sample"
+    ? '<div class="callout"><b>This is sample data</b>An invented example at an approximate location, shown so the map isn\'t empty. It is not a finding.</div>'
+    : r.src === "user"
+    ? '<div class="callout"><b>Saved in this browser only</b>Other people can\'t see it yet. Use Export under Layers &amp; filters to share it.</div>'
+    : '<div class="callout"><b>Verified on the ground</b>Photographed on site during the field survey.'+(tags.length ? ' This point can be added to OpenStreetMap.' : '')+'</div>';
+  openPanel(
+    photo +
+    '<h2>'+(cat ? cat.label : "Barrier (type not recorded)")+'</h2>'+
+    '<span class="chip '+r.src+'">'+SRC[r.src]+'</span>'+
+    '<dl class="rows">'+rows.map(([k,v]) => '<div><dt>'+k+'</dt><dd>'+v+'</dd></div>').join("")+'</dl>'+
+    callout+
+    '<div class="actions">'+
+      '<button class="btn" data-act="zoomTo">Zoom here</button>'+
+      '<a class="btn" href="'+osmLink(r.lat,r.lng)+'" target="_blank" rel="noopener">OpenStreetMap</a>'+
+      (r.src !== "sample" ? '<a class="btn" href="'+mcLink(r.lat,r.lng)+'" target="_blank" rel="noopener">Add to OSM with MapComplete</a>' : '')+
+      (r.src === "user" ? '<button class="btn danger" data-act="deleteMine">Delete</button>' : '')+
+    '</div>',
+    { kind:"feature", r });
+}
+
+// ---------- Layers & filters ----------
+function showLayers(keepScroll){
+  const cnt = s => allRecords().filter(r => r.src === s).length;
+  const tokenNeeded = !MAPILLARY_TOKEN;
+  openPanel(
+    '<h2>Layers &amp; filters</h2>'+
+    '<h3>Background</h3><div class="bases">'+
+      '<button class="base" data-act="base" data-base="street" aria-pressed="'+(base==="street")+'"><span style="background:linear-gradient(135deg,#f2efe9 0 40%,#fff 40% 46%,#e5e0d8 46% 70%,#fcd6a4 70% 75%,#f2efe9 75%)"></span><div>Street map</div></button>'+
+      '<button class="base" data-act="base" data-base="satellite" aria-pressed="'+(base==="satellite")+'"><span style="background:linear-gradient(135deg,#3d4a35 0 35%,#6b6b5a 35% 42%,#4f5d42 42% 68%,#8a8574 68% 73%,#2f3a2a 73%)"></span><div>Satellite</div></button>'+
+    '</div>'+
+    '<h3>Barrier reports</h3>'+
+    toggleRow("src","survey",'<div class="pin survey" style="--c:#c62828;width:22px;height:22px">'+icon("missing_ramp")+'</div>',"Field survey (verified)",cnt("survey"),state.src.survey)+
+    toggleRow("src","user",'<div class="pin user" style="--c:#c62828;width:22px;height:22px">'+icon("obstacle")+'</div>',"Your reports",cnt("user"),state.src.user)+
+    toggleRow("src","sample",'<div class="pin sample" style="--c:#c62828;width:22px;height:22px">'+icon("uneven")+'</div>',"Sample data (not real)",cnt("sample"),state.src.sample)+
+    '<h3>Barrier type</h3><div class="chips">'+Object.entries(CATS).map(([k,c]) =>
+      '<button class="chipbtn" data-act="type" data-k="'+k+'" aria-pressed="'+state.types.has(k)+'">'+c.label+'</button>').join("")+'</div>'+
+    '<h3>Severity</h3><div class="chips">'+Object.entries(SEV).map(([k,s]) =>
+      '<button class="chipbtn" data-act="sev" data-k="'+k+'" aria-pressed="'+state.sevs.has(k)+'"><span class="sev" style="background:'+s.hex+'"></span>'+s.label+'</button>').join("")+'</div>'+
+    '<h3>Street-level photos</h3>'+
+    toggleRow("ov","mly",'<span class="pin" style="--c:#05a357;width:22px;height:22px">'+icon("camera")+'</span>',"Mapillary photos",state.mlyCount,state.overlays.mly)+
+    (tokenNeeded ? '<div class="q" style="margin-top:8px"><label for="mlyToken"><b>Mapillary client token</b></label><p class="why" style="margin:4px 0 8px">Free from mapillary.com/dashboard/developers. Saved in this browser.</p><input type="text" id="mlyToken" placeholder="MLY|…" autocomplete="off" value="'+esc(lsGet("vam_mly",""))+'"></div>' : '')+
+    '<div class="actions" style="margin-top:8px"><button class="btn" data-act="loadMly">Load photos in view</button></div>'+
+    (state.mlyStatus ? '<p class="status">'+esc(state.mlyStatus)+'</p>' : '')+
+    '<h3>OpenStreetMap check</h3>'+
+    toggleRow("ov","gaps",'<span class="swatch"><svg width="22" height="6"><line x1="1" y1="3" x2="21" y2="3" stroke="#7b3fbf" stroke-width="3" stroke-dasharray="5 3"/></svg></span>',"Possible gaps (unverified)",state.gapCount,state.overlays.gaps)+
+    '<p class="status">Footways and crossings in the study area with no kerb, wheelchair or tactile-paving tags.</p>'+
+    '<div class="actions" style="margin-top:8px"><button class="btn" data-act="checkOsm">Check OSM tags</button></div>'+
+    (state.ovStatus ? '<p class="status">'+esc(state.ovStatus)+'</p>' : '')+
+    '<h3>Other</h3>'+
+    toggleRow("ov","study",'<span class="swatch"><svg width="22" height="16"><rect x="1" y="1" width="20" height="14" fill="none" stroke="#0b6e4f" stroke-width="2" stroke-dasharray="4 3"/></svg></span>',"Study area outline","",state.overlays.study)+
+    '<div class="actions"><button class="btn" data-act="export">Export all as JSON</button>'+(userReports.length ? '<button class="btn danger" data-act="clearMine">Delete my reports</button>' : '')+'</div>',
+    { kind:"layers" }, keepScroll);
+}
+function toggleRow(group, key, sw, label, count, on){
+  return '<label class="toggle"><span class="swatch">'+sw+'</span><span class="grow">'+label+'</span><span class="count">'+(count===""?"":count)+'</span>'+
+    '<input type="checkbox" data-toggle="'+group+'" data-k="'+key+'"'+(on?' checked':'')+'></label>';
+}
+function setOverlay(k, on){
+  state.overlays[k] = on;
+  const lyr = { mly:mlyLayer, gaps:gapLayer, study:studyLayer }[k];
+  if (on) lyr.addTo(map); else map.removeLayer(lyr);
+}
+
+// ---------- Mapillary ----------
+async function loadMapillary(){
+  const input = $("mlyToken");
+  const token = MAPILLARY_TOKEN || (input ? input.value.trim() : lsGet("vam_mly",""));
+  const done = msg => { state.mlyStatus = msg; if (current && current.kind === "layers") showLayers(true); };
+  if (!token) return done("Enter a Mapillary client token first.");
   if (!MAPILLARY_TOKEN) lsSet("vam_mly", token);
-  if (map.getZoom() < 15) { st.textContent = "Zoom in closer (street level) so the search area is small enough."; return; }
+  if (map.getZoom() < 15) return done("Zoom in to street level first, so the search area is small enough.");
   const b = map.getBounds();
   const bbox = [b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].map(n=>n.toFixed(5)).join(",");
-  const url = "https://graph.mapillary.com/images?fields=id,geometry,thumb_256_url,captured_at,creator&limit=100&bbox="+bbox+"&access_token="+encodeURIComponent(token);
-  st.textContent = "Loading…"; $("mlyBtn").disabled = true;
+  done("Loading street photos…");
   try {
-    const res = await fetch(url);
+    const res = await fetch("https://graph.mapillary.com/images?fields=id,geometry,thumb_256_url,thumb_1024_url,captured_at,creator&limit=150&bbox="+bbox+"&access_token="+encodeURIComponent(token));
     const json = await res.json().catch(()=>({}));
     if (!res.ok) throw new Error((json.error && json.error.message) || ("HTTP "+res.status));
     const imgs = (json.data||[]).filter(d => d.geometry && d.geometry.coordinates);
     mlyLayer.clearLayers();
     imgs.forEach(d => {
       const [lng,lat] = d.geometry.coordinates;
-      const p = { id:d.id, lat, lng, thumb:d.thumb_256_url, creator:(d.creator&&d.creator.username)||"Mapillary contributor", captured:d.captured_at };
-      L.circleMarker([lat,lng], { radius:6, color:"#fff", weight:2, fillColor:"#05cb63", fillOpacity:1 })
-        .bindPopup('<div class="popup">'+(p.thumb?'<a href="'+mlyLink(p.id)+'" target="_blank" rel="noopener"><img src="'+safeUrl(p.thumb)+'" alt="Mapillary street photo"></a>':'')+
-          '<small>&copy; '+esc(p.creator)+(p.captured?', '+new Date(p.captured).toLocaleDateString():'')+
-          ' &middot; <a href="'+mlyLink(p.id)+'" target="_blank" rel="noopener">Mapillary</a>, CC-BY-SA 4.0</small><br>'+
-          '<span class="src">Street photo, not yet reviewed</span><br><button data-mark>Mark as barrier</button></div>')
-        .on("popupopen", e => {
-          const btn = e.popup.getElement().querySelector("[data-mark]");
-          if (btn) btn.onclick = () => { setPicked(L.latLng(lat,lng)); setLinked(p); map.closePopup(); $("rDesc").focus(); };
-        })
-        .addTo(mlyLayer);
+      const p = { id:d.id, lat, lng, thumb:d.thumb_256_url, big:d.thumb_1024_url || d.thumb_256_url,
+                  creator:(d.creator && d.creator.username) || "Mapillary contributor", captured:d.captured_at };
+      L.circleMarker([lat,lng], { radius:6, color:"#fff", weight:2, fillColor:"#05a357", fillOpacity:1, bubblingMouseEvents:false })
+        .on("click", () => showMly(p)).addTo(mlyLayer);
     });
-    st.textContent = imgs.length ? imgs.length+" street photos in view. Click one to look, then mark barriers you can see."
-                                 : "No Mapillary photos here yet. Try another street, or add your own via the Mapillary app.";
-  } catch(err) {
-    st.textContent = "Could not load Mapillary photos: "+err.message;
-  } finally { $("mlyBtn").disabled = false; }
-};
+    state.mlyCount = imgs.length; setOverlay("mly", true);
+    done(imgs.length ? imgs.length+" street photos in view. Tap a green dot to look, then mark any barrier you can see."
+                     : "No Mapillary photos here yet. Try another street, or add photos with the Mapillary app.");
+  } catch(err) { done("Could not load Mapillary photos: "+err.message); }
+}
+function showMly(p){
+  openPanel(
+    hero(p.big, "Street-level photo from Mapillary", '&copy; '+esc(p.creator)+(p.captured ? ' &middot; '+fmtDate(p.captured) : '')+' &middot; CC-BY-SA 4.0', mlyLink(p.id))+
+    '<h2>Street-level photo</h2><span class="chip mly">Mapillary &middot; not yet reviewed</span>'+
+    '<p class="note">Look for a broken ramp, high kerb, blocked footpath or missing tactile paving. If you see one, mark it. The photo will be linked to your report as evidence.</p>'+
+    '<div class="actions"><button class="btn primary" data-act="markMly">Mark a barrier in this photo</button>'+
+    '<a class="btn" href="'+mlyLink(p.id)+'" target="_blank" rel="noopener">Open in Mapillary</a></div>',
+    { kind:"mly", p });
+}
 
-// ---- OSM Overpass check ----
-$("ovBtn").onclick = async () => {
-  const st = $("ovStatus");
+// ---------- OpenStreetMap gaps ----------
+const GAP_HELP = {
+  kerb:"Is the kerb raised, lowered or flush?",
+  tactile_paving:"Is there tactile paving?",
+  wheelchair:"Is this path usable in a wheelchair?"
+};
+async function checkOsm(){
+  const done = msg => { state.ovStatus = msg; if (current && current.kind === "layers") showLayers(true); };
   const bb = [STUDY.getSouth(),STUDY.getWest(),STUDY.getNorth(),STUDY.getEast()].join(",");
   const q = '[out:json][timeout:25];(way["highway"="footway"]('+bb+');way["footway"="crossing"]('+bb+');node["highway"="crossing"]('+bb+');node["kerb"]('+bb+'););out tags geom;';
-  st.textContent = "Querying OpenStreetMap…"; $("ovBtn").disabled = true;
+  done("Querying OpenStreetMap…");
   try {
     let json = null;
     try { json = JSON.parse(sessionStorage.getItem("vam_ov")); } catch(e){}
     if (!json) {
       const res = await fetch("https://overpass-api.de/api/interpreter", { method:"POST", body:"data="+encodeURIComponent(q),
         headers:{ "Content-Type":"application/x-www-form-urlencoded" } });
-      if (!res.ok) throw new Error("HTTP "+res.status+(res.status===429||res.status===504?" (server busy, try again in a minute)":""));
+      if (!res.ok) throw new Error("HTTP "+res.status+(res.status===429||res.status===504 ? " (server busy, try again in a minute)" : ""));
       json = await res.json();
       try { sessionStorage.setItem("vam_ov", JSON.stringify(json)); } catch(e){}
     }
@@ -399,29 +594,83 @@ $("ovBtn").onclick = async () => {
       checked++;
       if (!missing.length) return;
       gaps++;
-      const kind = crossing ? "Crossing" : (t.highway === "footway" ? "Footway" : "Kerb");
-      const html = '<div class="popup"><b>'+kind+(t.name?': '+esc(t.name):'')+'</b><br>OSM has no tag for: '+missing.map(esc).join(", ")+
-        '<br><span class="src gap">Possible gap (unverified)</span><br><small>Missing data, not a confirmed barrier. '+
-        '<a href="https://www.openstreetmap.org/'+el.type+'/'+el.id+'" target="_blank" rel="noopener">View on OSM</a></small></div>';
-      const style = { color:"#7b3fbf", weight:4, dashArray:"6 5" };
-      if (el.type === "way" && el.geometry) L.polyline(el.geometry.map(g=>[g.lat,g.lon]), style).bindPopup(html).addTo(gapLayer);
-      else if (el.type === "node") L.circleMarker([el.lat,el.lon], { radius:6, color:"#7b3fbf", weight:2, fillColor:"#fff", fillOpacity:1 }).bindPopup(html).addTo(gapLayer);
+      const g = { el, t, missing, kind: crossing ? "Crossing" : (t.highway === "footway" ? "Footway" : "Kerb") };
+      if (el.type === "way" && el.geometry) {
+        const pts = el.geometry.map(p => [p.lat,p.lon]); g.lat = pts[Math.floor(pts.length/2)][0]; g.lng = pts[Math.floor(pts.length/2)][1];
+        L.polyline(pts, { color:"#7b3fbf", weight:5, dashArray:"7 5", bubblingMouseEvents:false }).on("click", e => { L.DomEvent.stop(e); showGap(g); }).addTo(gapLayer);
+      } else if (el.type === "node") {
+        g.lat = el.lat; g.lng = el.lon;
+        L.circleMarker([el.lat,el.lon], { radius:7, color:"#7b3fbf", weight:3, fillColor:"#fff", fillOpacity:1, bubblingMouseEvents:false }).on("click", e => { L.DomEvent.stop(e); showGap(g); }).addTo(gapLayer);
+      }
     });
-    st.textContent = checked
-      ? checked+" mapped footway/crossing features checked; "+gaps+" missing accessibility tags (shown in purple)."
-      : "OpenStreetMap has almost no footways or crossings mapped in this area yet. That itself is a gap the survey can help fill.";
-  } catch(err) {
-    st.textContent = "Could not reach the Overpass API: "+err.message;
-  } finally { $("ovBtn").disabled = false; }
-};
+    state.gapCount = gaps; setOverlay("gaps", true);
+    done(checked ? checked+" mapped footway/crossing features checked; "+gaps+" are missing accessibility tags (purple)."
+                 : "OpenStreetMap has almost no footways or crossings mapped here yet. That is itself a gap the survey can help fill.");
+  } catch(err) { done("Could not reach the Overpass API: "+err.message); }
+}
+function showGap(g){
+  openPanel(
+    '<h2>'+g.kind+(g.t.name ? ': '+esc(g.t.name) : '')+'</h2><span class="chip gap">Possible gap &middot; unverified</span>'+
+    '<dl class="rows"><div><dt>Missing</dt><dd>'+g.missing.map(k => '<code>'+esc(k)+'</code> '+esc(GAP_HELP[k]||"")).join("<br>")+'</dd></div>'+
+    '<div><dt>Mapped as</dt><dd>'+Object.entries(g.t).slice(0,6).map(([k,v]) => '<code>'+esc(k)+'='+esc(v)+'</code>').join(" ")+'</dd></div></dl>'+
+    '<div class="callout"><b>Missing data, not a confirmed barrier</b>Nobody has recorded these details in OpenStreetMap yet. Check it on the ground, then add the answer. That improves every map app that uses OSM.</div>'+
+    '<div class="actions"><a class="btn primary" href="'+mcLink(g.lat,g.lng)+'" target="_blank" rel="noopener">Answer in MapComplete</a>'+
+    '<a class="btn" href="https://www.openstreetmap.org/'+g.el.type+'/'+g.el.id+'" target="_blank" rel="noopener">View on OSM</a></div>',
+    { kind:"gap", g });
+}
 
-// ---- Reporting ----
+// ---------- Adding a report ----------
+let draft = null;
+function startAdd(preset){
+  draft = { cat:null, latlng:null, mly:null, ...(preset||{}) };
+  openPanel(
+    '<h2>What did you find?</h2><p class="note" style="margin-top:0">Choose the closest match. You can add details next.</p>'+
+    (draft.mly ? '<div class="callout" style="margin-bottom:12px"><b>Linked photo</b>Mapillary photo by '+esc(draft.mly.creator)+'</div>' : '')+
+    '<div class="types">'+Object.entries(CATS).map(([k,c]) =>
+      '<button class="type" data-act="pickType" data-k="'+k+'"><span class="ic">'+icon(k)+'</span>'+c.label+'<small>'+c.hint+'</small></button>').join("")+'</div>',
+    { kind:"add" });
+}
+function startPlacing(){
+  if (draft.latlng) map.setView(draft.latlng, Math.max(map.getZoom(), 18));
+  else if (map.getZoom() < 17) map.setZoom(17);
+  document.body.classList.add("placing");
+  $("crosshair").hidden = false; $("placeBar").hidden = false;
+  $("placeOk").focus();
+}
+function endPlacing(){
+  document.body.classList.remove("placing");
+  $("crosshair").hidden = true; $("placeBar").hidden = true;
+}
+$("placeOk").onclick = () => { draft.latlng = map.getCenter(); endPlacing(); showQuestions(); };
+$("placeCancel").onclick = () => { endPlacing(); draft = null; closePanel(); };
+$("placeMe").onclick = () => locate(ll => map.setView(ll, 19));
+
+function radio(name, val, title, hint, checked){
+  return '<label class="opt"><input type="radio" name="'+name+'" value="'+esc(val)+'"'+(checked?' checked':'')+'><span><b>'+title+'</b>'+(hint?'<small>'+hint+'</small>':'')+'</span></label>';
+}
+function showQuestions(){
+  const c = CATS[draft.cat], q = QUESTIONS[draft.cat];
+  openPanel(
+    '<h2><span class="pin user" style="--c:var(--accent);width:32px;height:32px;flex:none">'+icon(draft.cat)+'</span>'+c.label+'</h2>'+
+    '<p class="note" style="margin-top:0">'+coords(draft.latlng.lat, draft.latlng.lng)+' &middot; <a href="#" data-act="movePin">Move pin</a> &middot; <a href="#" data-act="changeType">Change type</a></p>'+
+    '<form id="addForm">'+
+      '<div class="q"><b>How serious is it?</b>'+Object.entries(SEV).map(([k,s]) => radio("sev", k, '<span class="sev" style="background:'+s.hex+'"></span>'+s.label, s.hint, k==="med")).join("")+'</div>'+
+      (q ? '<div class="q"><b>'+q.q+'</b>'+(OSM_KEYS.includes(q.key) ? '<p class="why">Saved as the OpenStreetMap tag <span class="tag">'+q.key+'</span></p>' : '')+
+        q.opts.map(o => radio("detail", o[0], o[1], o[2], false)).join("")+radio("detail", "", "Not sure", "", true)+'</div>' : '')+
+      '<div class="q"><label for="fDesc"><b>Anything else?</b></label><p class="why" style="margin:4px 0 8px">Where exactly, and how it affects people. Optional.</p><textarea id="fDesc" placeholder="e.g. No dropped kerb at the crossing outside the bank, wheelchair users have to go into the road"></textarea></div>'+
+      '<div class="q"><label for="fPhoto"><b>Add your own photo</b></label><p class="why" style="margin:4px 0 8px">Optional. Only photos you took yourself, please.</p><input type="file" id="fPhoto" accept="image/*"></div>'+
+      (draft.mly ? '<div class="callout"><b>Evidence</b>Linked to a Mapillary photo by '+esc(draft.mly.creator)+'.</div>' : '')+
+      '<div class="actions"><button class="btn primary" type="submit">Save report</button><button class="btn" type="button" data-act="cancelAdd">Cancel</button></div>'+
+      '<p class="note">Saved in this browser only, until shared storage is added.</p>'+
+    '</form>',
+    { kind:"questions" });
+}
 function readPhoto(file){
   return new Promise(res => {
     if (!file) return res(null);
     const img = new Image(), url = URL.createObjectURL(file);
     img.onload = () => {
-      const s = Math.min(1, 480/img.width), c = document.createElement("canvas");
+      const s = Math.min(1, 640/img.width), c = document.createElement("canvas");
       c.width = img.width*s; c.height = img.height*s;
       c.getContext("2d").drawImage(img,0,0,c.width,c.height);
       URL.revokeObjectURL(url);
@@ -431,27 +680,108 @@ function readPhoto(file){
     img.src = url;
   });
 }
+panel.addEventListener("submit", async e => {
+  e.preventDefault();
+  const f = e.target, q = QUESTIONS[draft.cat];
+  const sev = (f.querySelector('input[name=sev]:checked')||{}).value || "med";
+  const detail = (f.querySelector('input[name=detail]:checked')||{}).value || "";
+  const photo = await readPhoto($("fPhoto").files[0]);
+  const r = { id:"u"+Date.now(), lat:draft.latlng.lat, lng:draft.latlng.lng, cat:draft.cat, sev,
+    tags: q && detail ? { [q.key]: detail } : {}, desc: $("fDesc").value.trim(), photo,
+    mly: draft.mly ? { id:draft.mly.id, creator:draft.mly.creator, thumb:draft.mly.thumb } : null, ts:Date.now(), src:"user" };
+  userReports.unshift(r); store.save(userReports); draft = null;
+  render(); showFeature(r); toast("Report saved in this browser.");
+});
 
-$("submit").onclick = async () => {
-  if (!picked) { alert("Click the map first to pick the location."); return; }
-  const photo = await readPhoto($("rPhoto").files[0]);
-  const mly = linkedPhoto ? { id:linkedPhoto.id, creator:linkedPhoto.creator, thumb:linkedPhoto.thumb } : null;
-  userReports.unshift({ id:"u"+Date.now(), lat:picked.lat, lng:picked.lng, cat:$("rCat").value, sev:$("rSev").value,
-    desc:$("rDesc").value.trim(), photo, mly, ts:Date.now(), src:"user" });
-  store.save(userReports);
-  $("rDesc").value = ""; $("rPhoto").value = "";
-  if (pickMarker) { map.removeLayer(pickMarker); pickMarker = null; }
-  picked = null; setLinked(null); $("picked").textContent = "Report added. Pick another location to add more.";
-  render();
+// ---------- Panel actions ----------
+const ACTIONS = {
+  close: closePanel,
+  zoomTo: () => { const r = current.r; map.setView([r.lat,r.lng], 18); },
+  deleteMine: () => {
+    const id = current.r.id;
+    if (!confirm("Delete this report?")) return;
+    userReports = userReports.filter(r => r.id !== id); store.save(userReports); render(); closePanel(); toast("Report deleted.");
+  },
+  base: d => { map.removeLayer(BASES[base]); base = d.base; BASES[base].addTo(map); showLayers(true); },
+  type: d => { state.types.has(d.k) ? state.types.delete(d.k) : state.types.add(d.k); render(); showLayers(true); },
+  sev: d => { state.sevs.has(d.k) ? state.sevs.delete(d.k) : state.sevs.add(d.k); render(); showLayers(true); },
+  loadMly: loadMapillary,
+  checkOsm: checkOsm,
+  export: () => {
+    const out = allRecords().map(({photo,id,...r}) => ({ ...r, ...(r.src==="survey" ? {photo} : {}), source: SRC[r.src] }));
+    const blob = new Blob([JSON.stringify({ exported:new Date().toISOString(), license:"CC-BY-SA 4.0", reports:out }, null, 2)], { type:"application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "vadodara-access-reports.json"; a.click();
+  },
+  clearMine: () => { if (confirm("Delete all reports you added in this browser?")) { userReports = []; store.save(userReports); render(); showLayers(true); } },
+  markMly: () => { const p = current.p; startAdd({ latlng:L.latLng(p.lat,p.lng), mly:p }); },
+  pickType: d => { draft.cat = d.k; closePanel(); startPlacing(); },
+  movePin: () => { closePanel(); startPlacing(); },
+  changeType: () => startAdd({ latlng:draft.latlng, mly:draft.mly }),
+  cancelAdd: () => { draft = null; closePanel(); }
 };
-$("exportBtn").onclick = () => {
-  const out = [...SURVEY, ...userReports, ...SAMPLE].map(({photo,id,...r}) => ({ ...r, ...(r.src==="survey" ? {photo} : {}), source: SRC_LABEL[r.src] }));
-  const blob = new Blob([JSON.stringify({ exported: new Date().toISOString(), license: "CC-BY-SA 4.0", reports: out }, null, 2)], {type:"application/json"});
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "vadodara-access-reports.json"; a.click();
-};
-$("clearBtn").onclick = () => { if (confirm("Delete all reports you added?")) { userReports = []; store.save(userReports); render(); } };
-$("fCat").onchange = $("fSev").onchange = $("fSrc").onchange = render;
+panel.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (!el || !ACTIONS[el.dataset.act]) return;
+  if (el.tagName === "A") e.preventDefault();
+  ACTIONS[el.dataset.act](el.dataset, el);
+});
+panel.addEventListener("change", e => {
+  const el = e.target.closest("[data-toggle]");
+  if (!el) return;
+  if (el.dataset.toggle === "src") { state.src[el.dataset.k] = el.checked; render(); }
+  else setOverlay(el.dataset.k, el.checked);
+});
+
+// ---------- Top-level controls ----------
+$("layersBtn").onclick = () => showLayers();
+$("addBtn").onclick = () => startAdd();
+function locate(cb){
+  if (!navigator.geolocation) return toast("Location is not available in this browser.");
+  navigator.geolocation.getCurrentPosition(
+    p => cb(L.latLng(p.coords.latitude, p.coords.longitude)),
+    () => toast("Couldn't get your location. Check location permission for this site."),
+    { enableHighAccuracy:true, timeout:10000 });
+}
+let meMarker = null;
+$("locateBtn").onclick = () => locate(ll => {
+  map.setView(ll, 18);
+  if (meMarker) meMarker.setLatLng(ll);
+  else meMarker = L.circleMarker(ll, { radius:8, color:"#fff", weight:3, fillColor:"#1a73e8", fillOpacity:1, interactive:false }).addTo(map);
+});
+
+const about = $("about");
+function openAbout(tab){ about.hidden = false; selectTab(tab || "t-about"); about.querySelector(".x").focus(); }
+function selectTab(id){
+  about.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tab === id)));
+  about.querySelectorAll(".tab-panel").forEach(s => { s.hidden = s.id !== id; });
+}
+$("aboutBtn").onclick = () => openAbout();
+about.addEventListener("click", e => {
+  if (e.target === about || e.target.closest("[data-close-about]")) { about.hidden = true; return; }
+  const t = e.target.closest("[data-tab]"); if (t) selectTab(t.dataset.tab);
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (!about.hidden) about.hidden = true;
+  else if (document.body.classList.contains("placing")) $("placeCancel").click();
+  else if (!panel.hidden) closePanel();
+});
+
+function showWelcome(){
+  openPanel(
+    '<h2>Welcome</h2>'+
+    '<p>This map records barriers that make it hard to get around Alkapuri, Sayaji Baug and the railway station area in a wheelchair, with a pram, or on foot: broken ramps, high kerbs, blocked footpaths, missing tactile paving and steps with no alternative.</p>'+
+    (SURVEY.length
+      ? '<div class="callout"><b>'+SURVEY.length+' barriers surveyed on foot</b>Square pins are from the field survey, each with a photo taken on site.</div>'
+      : '<div class="callout"><b>Early stage</b>The field survey is under way. Until it\'s done, faded dashed pins are <b>sample data</b>, not real findings.</div>')+
+    '<div class="actions"><button class="btn primary" data-act="close">Explore the map</button><button class="btn" data-act="welcomeAdd">Report a barrier</button><button class="btn" data-act="welcomeAbout">Why this project?</button></div>',
+    { kind:"welcome" });
+}
+ACTIONS.welcomeAdd = () => startAdd();
+ACTIONS.welcomeAbout = () => { closePanel(); openAbout("t-why"); };
+
 render();
+if (lsGet("vam_seen","") !== "1") { showWelcome(); lsSet("vam_seen","1"); }
 </script>
 </body>
 </html>
