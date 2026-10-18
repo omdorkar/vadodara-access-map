@@ -4,6 +4,17 @@ A free, open-source map of physical-mobility barriers (broken or missing ramps, 
 
 <!-- Screenshot: add docs/screenshot.png once the survey photos are on the map. -->
 
+## Why Vadodara
+Local news has reported for years that the city is hard to get around for people with disabilities:
+
+- **"Vadodara's buildings are not disabled-friendly"**, *Times of India*, 24 July 2014. Replies to RTI requests showed that most buildings in the district lacked ramps, accessible lifts, parking, toilets and signage.
+- **"City yet to adapt to needs of the disabled"**, *Times of India*, 4 July 2014. Apart from the collector's office, public buildings and places remained difficult to access, despite repeated petitions from NGOs and disability groups to the Vadodara Municipal Corporation.
+- **[Motorised stair-climber wheelchairs launched at Vadodara railway station](https://deshgujarat.com/2022/11/03/motorised-stair-climber-wheelchair-facility-at-vadodara-station/)**, *DeshGujarat*, 3 November 2022 (also covered by the *Times of India*). This is a welcome step, but the report notes it was needed because lifts and escalators could not be provided on the other platforms.
+
+Those reports are now years old. This project asks a simple question: **what is it like today, street by street?** It answers with photos and locations anyone can check.
+
+The method is inspired by the University of Alberta's [Atlas / Click&Push](https://www.ualberta.ca/en/folio/2025/04/overcoming-obstacles.html) work. That team combines crowdsourced barrier reports with camera and GPS data, and is developing deep learning to detect barriers automatically. This project is a small, student-led version of the same idea, for one area of Vadodara.
+
 ## What's on the map
 - **Field survey pins** (square): geotagged photos taken on foot in the study area, each credited.
 - **Added by you**: reports visitors make in their own browser (exportable as JSON).
