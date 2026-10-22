@@ -22,7 +22,10 @@ The method is inspired by the University of Alberta's [Atlas / Click&Push](https
 - **Your reports** (ringed): reports a visitor makes, stored in their own browser for now (exportable as JSON).
 - **Sample data** (faded, dashed): 16 illustrative pins, clearly labelled. They are not findings, and they hide automatically once real survey data exists.
 - **Mapillary photos** (green dots): real street-level imagery (CC-BY-SA). You can mark a barrier you see in a photo.
-- **OSM possible gaps** (purple dashes): mapped footways and crossings missing `kerb` / `wheelchair` / `tactile_paving` tags. This shows missing data, not a confirmed barrier, with a link to answer it in MapComplete.
+- **Already known in OSM** (green / orange / red dots): places and kerbs where OpenStreetMap mappers recorded wheelchair access, kerb height or tactile paving. These are other people's data, shown as context.
+- **OSM possible gaps** (purple dashes): mapped footways and crossings missing `kerb` / `wheelchair` / `tactile_paving` tags. This shows missing data, not a confirmed barrier, with a link to answer it in MapComplete. Off by default; switch it on under Layers & filters.
+- **Community reports** (double ring): visitor reports shared to the database and approved. Switched on once Supabase is set up (see [docs/SHARED_REPORTS.md](docs/SHARED_REPORTS.md)).
+- **[Street report](https://omdorkar.github.io/vadodara-access-map/report.html)**: a printable, street-by-street list of the surveyed barriers with photos, locations and suggested fixes, for sending to the city.
 - **Street / satellite** background (OSM and Esri World Imagery), plus filters by type and severity.
 
 ## How to report a barrier
@@ -49,14 +52,19 @@ osascript -l JavaScript tools/process_photos.js "$PWD"
 ## Files
 | Path | Purpose |
 |---|---|
-| `index.html` | The whole site (Leaflet 1.9.4 from cdnjs) |
-| `data/survey.js` | Field survey records (generated, hand-editable) |
+| `index.html` | The map (Leaflet 1.9.4 from cdnjs). Settings for Mapillary, OSM username and Supabase are at the top of its script |
+| `report.html` | Printable street report, generated from the survey data |
+| `data/survey.js` | Field survey records (generated, hand-editable: type, severity, note, `tags`, street) |
+| `data/vocab.js` | Barrier types, severity levels, questions and suggested fixes, shared by both pages |
 | `photos/web/` | Published survey photos and thumbnails |
-| `tools/process_photos.js` | Reads photo GPS, makes web copies, writes `data/survey.js` |
+| `tools/process_photos.js` | Reads photo GPS, makes web copies, looks up street names, writes `data/survey.js` |
+| `supabase/schema.sql` | Database table and access rules for shared reports |
+| `docs/SHARED_REPORTS.md` | Setting up and reviewing shared reports |
+| `docs/OUTREACH.md` | Consent note, interview questions, letters to a disability organisation and the VMC |
 | `DATA_SOURCES.md` | Every data source and its licence |
 
 ## Limitations
-Sample pins are invented. Visitor reports aren't shared between browsers yet. OSM coverage of footways here is thin. Satellite imagery can't show ramp condition. Phone GPS is accurate to about 5–15 m.
+Sample pins are invented (and hide once survey data exists). Visitor reports stay in their own browser until shared storage is switched on, and shared ones are reviewed for plausibility, not verified on the ground. OSM coverage of footways here is thin. Satellite imagery can't show ramp condition. Phone GPS is accurate to about 5–15 m.
 
 ## Roadmap
 1. Field survey: 10–15 barriers with geotagged photos, plus a Mapillary street-level sequence of the route (in progress).

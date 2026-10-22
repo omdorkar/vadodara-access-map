@@ -69,6 +69,9 @@
   .chip.user { background:#e3eefc; color:#163d73; border-color:#bcd3f5; }
   .chip.gap { background:#efe4fb; color:#4a2378; border-color:#d8c3f2; }
   .chip.mly { background:#d9f7e6; color:#0a5a33; border-color:#aee8c8; }
+  .chip.osm { background:#e6f0f7; color:#0f3d5c; border-color:#bcd6ea; }
+  .chip.community { background:#e8f5e9; color:#1b5e20; border-color:#b9dfbc; }
+  .pin.community { box-shadow:0 0 0 2px #fff, 0 0 0 4px #1b5e20; }
   .rows { margin:12px 0 0; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
   .rows > div { display:flex; gap:12px; padding:10px 12px; border-top:1px solid var(--line); font-size:14px; }
   .rows > div:first-child { border-top:0; }
@@ -224,6 +227,8 @@
         <li><b>Later:</b> a small ramp/obstacle detector, trained only on photos whose licence allows it.</li>
       </ul>
       <p class="muted" style="color:var(--muted)">Built by Om Dorkar. Open source on <a href="https://github.com/omdorkar/vadodara-access-map" target="_blank" rel="noopener">GitHub</a>.</p>
+      <p id="osmContrib" hidden></p>
+      <p><a href="report.html">Printable street report</a> of the field survey.</p>
     </section>
     <section class="tab-panel" id="t-why" hidden>
       <p>Local news has reported for years that the city is hard to get around for people with disabilities:</p>
@@ -269,49 +274,23 @@
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="data/vocab.js"></script>
 <script src="data/survey.js"></script>
 <script>
-// Paste a Mapillary client token here (it is designed for public browser use), or enter it under Layers & filters.
+// ---------- Settings: each feature switches on when its value is filled in ----------
+// Mapillary client token (starts with MLY|). Designed for public browser use. Can also be entered under Layers & filters.
 const MAPILLARY_TOKEN = "";
+// Om's OpenStreetMap username, for the live "edits to OpenStreetMap" count.
+const OSM_USERNAME = "";
+// Supabase project URL and *anon* key (public by design; protected by row-level security). Never the service_role key.
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+const OVERPASS_SERVERS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter"];
 
-// ---------- Vocabulary ----------
-const CATS = {
-  missing_ramp: { label:"Missing ramp / kerb cut", hint:"High kerb, no dropped kerb" },
-  broken_ramp:  { label:"Broken ramp", hint:"Cracked, too steep, ends in a step" },
-  obstacle:     { label:"Blocked footpath", hint:"Vehicles, carts, signs, poles" },
-  uneven:       { label:"Damaged footpath", hint:"Broken slabs, open drains" },
-  no_tactile:   { label:"No tactile paving", hint:"Missing or broken guide tiles" },
-  stairs_only:  { label:"Steps only", hint:"Entrance with no ramp" },
-  lighting:     { label:"Poor lighting", hint:"Dark footpath or underpass" }
-};
-const SEV = {
-  high: { label:"High", hint:"A wheelchair user cannot pass", hex:"#c62828" },
-  med:  { label:"Medium", hint:"Possible but difficult or unsafe", hex:"#e08600" },
-  low:  { label:"Low", hint:"Inconvenient", hex:"#2e7d32" }
-};
-const SRC = { survey:"Field survey", user:"Your report", sample:"Sample data" };
-const OSM_KEYS = ["kerb","tactile_paving","wheelchair","lit"];
-
-// One follow-up question per type. Where OpenStreetMap has a standard tag, the answer is stored as that tag.
-const QUESTIONS = {
-  missing_ramp: { key:"kerb", q:"How high is the kerb?", opts:[
-    ["raised","Raised","More than about 3 cm. A wheelchair cannot roll over it."],
-    ["lowered","Lowered","About 3 cm. Passable, but it's a bump."],
-    ["flush","Flush","Level with the road, but something else blocks access."]] },
-  broken_ramp: { key:"issue", q:"What's wrong with the ramp?", opts:[
-    ["damaged","Cracked or crumbling",""],["too_steep","Too steep",""],["step_at_end","Ends in a step or gap",""],["blocked","Blocked by something",""]] },
-  obstacle: { key:"issue", q:"What is blocking the footpath?", opts:[
-    ["parked_vehicles","Parked vehicles",""],["vendors","Vendor stall or cart",""],["signboard","Sign or advertising board",""],
-    ["pole_tree","Pole, tree or electrical box",""],["construction","Construction or debris",""]] },
-  uneven: { key:"issue", q:"What kind of damage?", opts:[
-    ["broken_slabs","Broken or raised slabs",""],["open_drain","Open or missing drain cover",""],["height_change","Sudden step or height change",""],["potholes","Potholes or loose surface",""]] },
-  no_tactile: { key:"tactile_paving", q:"Is there tactile paving?", opts:[
-    ["no","None","No guide tiles where they are needed."],["incorrect","Present but broken or wrong","Damaged, blocked, or leads somewhere unsafe."]] },
-  stairs_only: { key:"wheelchair", q:"Can a wheelchair user get in at all?", opts:[
-    ["no","No","Steps only, no ramp or lift."],["limited","With help","One step, or a portable ramp on request."]] },
-  lighting: { key:"lit", q:"Is there street lighting?", opts:[
-    ["no","No lights",""],["broken","Lights present but not working","Not an OSM value; recorded as a note."]] }
-};
+// ---------- Vocabulary (shared with report.html, see data/vocab.js) ----------
+const { CATS, SEV, OSM_KEYS, QUESTIONS } = window.VAM_VOCAB;
+const SRC = { survey:"Field survey", community:"Community report (reviewed)", user:"Your report", sample:"Sample data" };
+const supaOn = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 // ---------- Icons (drawn for this project) ----------
 const ICON_PATHS = {
@@ -363,7 +342,8 @@ const store = {
   save(a){ if (!lsSet("vam_user", JSON.stringify(a))) toast("Could not save: browser storage is full or blocked. Try a smaller photo."); }
 };
 let userReports = store.load();
-const allRecords = () => [...SURVEY, ...userReports, ...SAMPLE];
+let community = [];   // approved reports from Supabase
+const allRecords = () => [...SURVEY, ...community, ...userReports, ...SAMPLE];
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -389,16 +369,17 @@ const BASES = {
 let base = "street"; BASES.street.addTo(map);
 const reportLayer = L.layerGroup().addTo(map);
 const mlyLayer = L.layerGroup().addTo(map);
-const gapLayer = L.layerGroup().addTo(map);
+const gapLayer = L.layerGroup();   // off by default; switched on from Layers
+const knownLayer = L.layerGroup().addTo(map);
 const studyLayer = L.rectangle(STUDY, { color:"#0b6e4f", weight:2, dashArray:"6 6", fill:false, interactive:false }).addTo(map);
 
 const state = {
   // Sample pins only show while there is no real survey data; they can still be switched on under Layers.
-  src: { survey:true, user:true, sample: SURVEY.length === 0 },
+  src: { survey:true, community:true, user:true, sample: SURVEY.length === 0 },
   types: new Set(Object.keys(CATS)),
   sevs: new Set(Object.keys(SEV)),
-  overlays: { mly:true, gaps:true, study:true },
-  mlyCount: 0, mlyStatus: "", gapCount: 0, ovStatus: ""
+  overlays: { mly:true, gaps:false, known:true, study:true },
+  mlyCount: 0, mlyStatus: "", gapCount: 0, knownCount: 0, ovStatus: ""
 };
 
 function pinIcon(r){
@@ -411,7 +392,7 @@ function render(){
   for (const k in markers) delete markers[k];
   allRecords().filter(r => state.src[r.src] && (!r.cat || state.types.has(r.cat)) && (!r.sev || state.sevs.has(r.sev)))
     .forEach(r => {
-      markers[r.id] = L.marker([r.lat,r.lng], { icon:pinIcon(r), zIndexOffset: r.src==="survey" ? 600 : r.src==="user" ? 300 : 0,
+      markers[r.id] = L.marker([r.lat,r.lng], { icon:pinIcon(r), zIndexOffset: r.src==="survey" ? 600 : r.src==="community" ? 400 : r.src==="user" ? 300 : 0,
         title: (CATS[r.cat] ? CATS[r.cat].label : "Barrier")+" ("+SRC[r.src]+")", keyboard:true })
         .on("click", () => showFeature(r)).addTo(reportLayer);
     });
@@ -463,6 +444,10 @@ function showFeature(r){
   ].filter(Boolean);
   const callout = r.src === "sample"
     ? '<div class="callout"><b>This is sample data</b>An invented example at an approximate location, shown so the map isn\'t empty. It is not a finding.</div>'
+    : r.src === "community"
+    ? '<div class="callout"><b>Reported by a visitor, reviewed</b>Checked for plausibility before publishing, but not verified on the ground by this project.</div>'
+    : r.shared === "pending"
+    ? '<div class="callout"><b>Sent for review</b>It will appear for everyone once approved. This copy is kept in your browser.</div>'
     : r.src === "user"
     ? '<div class="callout"><b>Saved in this browser only</b>Other people can\'t see it yet. Use Export under Layers &amp; filters to share it.</div>'
     : '<div class="callout"><b>Verified on the ground</b>Photographed on site during the field survey.'+(tags.length ? ' This point can be added to OpenStreetMap.' : '')+'</div>';
@@ -494,6 +479,7 @@ function showLayers(keepScroll){
     '<h3>Barrier reports</h3>'+
     toggleRow("src","survey",'<div class="pin survey" style="--c:#c62828;width:22px;height:22px">'+icon("missing_ramp")+'</div>',"Field survey (verified)",cnt("survey"),state.src.survey)+
     toggleRow("src","user",'<div class="pin user" style="--c:#c62828;width:22px;height:22px">'+icon("obstacle")+'</div>',"Your reports",cnt("user"),state.src.user)+
+    (supaOn ? toggleRow("src","community",'<div class="pin community" style="--c:#c62828;width:22px;height:22px">'+icon("broken_ramp")+'</div>',"Community reports (reviewed)",cnt("community"),state.src.community) : '')+
     toggleRow("src","sample",'<div class="pin sample" style="--c:#c62828;width:22px;height:22px">'+icon("uneven")+'</div>',"Sample data (not real)",cnt("sample"),state.src.sample)+
     '<h3>Barrier type</h3><div class="chips">'+Object.entries(CATS).map(([k,c]) =>
       '<button class="chipbtn" data-act="type" data-k="'+k+'" aria-pressed="'+state.types.has(k)+'">'+c.label+'</button>').join("")+'</div>'+
@@ -504,10 +490,12 @@ function showLayers(keepScroll){
     (tokenNeeded ? '<div class="q" style="margin-top:8px"><label for="mlyToken"><b>Mapillary client token</b></label><p class="why" style="margin:4px 0 8px">Free from mapillary.com/dashboard/developers. Saved in this browser.</p><input type="text" id="mlyToken" placeholder="MLY|…" autocomplete="off" value="'+esc(lsGet("vam_mly",""))+'"></div>' : '')+
     '<div class="actions" style="margin-top:8px"><button class="btn" data-act="loadMly">Load photos in view</button></div>'+
     (state.mlyStatus ? '<p class="status">'+esc(state.mlyStatus)+'</p>' : '')+
-    '<h3>OpenStreetMap check</h3>'+
+    '<h3>OpenStreetMap</h3>'+
+    toggleRow("ov","known",'<span class="swatch"><svg width="22" height="14"><circle cx="5" cy="7" r="4" fill="#2e7d32" stroke="#fff" stroke-width="1.5"/><circle cx="11" cy="7" r="4" fill="#e08600" stroke="#fff" stroke-width="1.5"/><circle cx="17" cy="7" r="4" fill="#c62828" stroke="#fff" stroke-width="1.5"/></svg></span>',"Already known in OSM",state.knownCount,state.overlays.known)+
+    '<p class="status">Places and kerbs where OSM mappers recorded wheelchair access, kerb height or tactile paving. Green accessible, orange limited, red not accessible.</p>'+
     toggleRow("ov","gaps",'<span class="swatch"><svg width="22" height="6"><line x1="1" y1="3" x2="21" y2="3" stroke="#7b3fbf" stroke-width="3" stroke-dasharray="5 3"/></svg></span>',"Possible gaps (unverified)",state.gapCount,state.overlays.gaps)+
     '<p class="status">Footways and crossings in the study area with no kerb, wheelchair or tactile-paving tags.</p>'+
-    '<div class="actions" style="margin-top:8px"><button class="btn" data-act="checkOsm">Check OSM tags</button></div>'+
+    (osmLoaded ? '' : '<div class="actions" style="margin-top:8px"><button class="btn" data-act="checkOsm">Load OpenStreetMap data</button></div>')+
     (state.ovStatus ? '<p class="status">'+esc(state.ovStatus)+'</p>' : '')+
     '<h3>Other</h3>'+
     toggleRow("ov","study",'<span class="swatch"><svg width="22" height="16"><rect x="1" y="1" width="20" height="14" fill="none" stroke="#0b6e4f" stroke-width="2" stroke-dasharray="4 3"/></svg></span>',"Study area outline","",state.overlays.study)+
@@ -520,7 +508,7 @@ function toggleRow(group, key, sw, label, count, on){
 }
 function setOverlay(k, on){
   state.overlays[k] = on;
-  const lyr = { mly:mlyLayer, gaps:gapLayer, study:studyLayer }[k];
+  const lyr = { mly:mlyLayer, gaps:gapLayer, known:knownLayer, study:studyLayer }[k];
   if (on) lyr.addTo(map); else map.removeLayer(lyr);
 }
 
@@ -569,25 +557,74 @@ const GAP_HELP = {
   tactile_paving:"Is there tactile paving?",
   wheelchair:"Is this path usable in a wheelchair?"
 };
-async function checkOsm(){
+// Tries each Overpass server in turn; the public servers are sometimes busy.
+async function overpass(q){
+  let last = null;
+  for (const url of OVERPASS_SERVERS) {
+    try {
+      const res = await fetch(url, { method:"POST", body:"data="+encodeURIComponent(q), headers:{ "Content-Type":"application/x-www-form-urlencoded" } });
+      if (res.ok) return await res.json();
+      last = new Error("HTTP "+res.status+(res.status===429||res.status===504 ? " (servers busy, try again in a minute)" : ""));
+    } catch(err) { last = err; }
+  }
+  throw last || new Error("no Overpass server reachable");
+}
+
+// What OpenStreetMap already records about access, rated for a wheelchair user.
+const KNOWN_RATING = {
+  wheelchair: { yes:"good", designated:"good", limited:"limited", no:"bad" },
+  kerb: { lowered:"good", flush:"good", no:"good", raised:"bad" },
+  tactile_paving: { yes:"good", contrasted:"good", no:"bad", incorrect:"bad" }
+};
+const RATING = { good:{ hex:"#2e7d32", label:"Accessible" }, limited:{ hex:"#e08600", label:"Limited access" }, bad:{ hex:"#c62828", label:"Not accessible" } };
+const TAG_LABEL = {
+  wheelchair:{ yes:"Wheelchair accessible", designated:"Designed for wheelchairs", limited:"Partly wheelchair accessible", no:"Not wheelchair accessible" },
+  kerb:{ lowered:"Lowered kerb", flush:"Flush kerb", no:"No kerb", raised:"Raised kerb" },
+  tactile_paving:{ yes:"Tactile paving", contrasted:"Tactile paving (contrasting colour)", no:"No tactile paving", incorrect:"Tactile paving laid incorrectly" }
+};
+function rateKnown(t){
+  const r = Object.keys(KNOWN_RATING).map(k => KNOWN_RATING[k][t[k]]).filter(Boolean);
+  return r.includes("bad") ? "bad" : r.includes("limited") ? "limited" : r.length ? "good" : null;
+}
+function knownName(t){
+  return t.name || t["name:en"] || (t.amenity || t.shop || t.tourism || t.railway || t.public_transport || t.highway || t.building || "place").replace(/_/g," ");
+}
+
+let osmLoaded = false;
+async function checkOsm(quiet){
   const done = msg => { state.ovStatus = msg; if (current && current.kind === "layers") showLayers(true); };
   const bb = [STUDY.getSouth(),STUDY.getWest(),STUDY.getNorth(),STUDY.getEast()].join(",");
-  const q = '[out:json][timeout:25];(way["highway"="footway"]('+bb+');way["footway"="crossing"]('+bb+');node["highway"="crossing"]('+bb+');node["kerb"]('+bb+'););out tags geom;';
-  done("Querying OpenStreetMap…");
+  const q = '[out:json][timeout:25];'+
+    '(way["highway"="footway"]('+bb+');way["footway"="crossing"]('+bb+');node["highway"="crossing"]('+bb+');node["kerb"]('+bb+'););out tags geom;'+
+    '(nwr["wheelchair"]('+bb+');nwr["kerb"]('+bb+');nwr["tactile_paving"]('+bb+'););out tags center;';
+  if (!quiet) done("Querying OpenStreetMap…");
   try {
     let json = null;
-    try { json = JSON.parse(sessionStorage.getItem("vam_ov")); } catch(e){}
+    try { json = JSON.parse(sessionStorage.getItem("vam_ov2")); } catch(e){}
     if (!json) {
-      const res = await fetch("https://overpass-api.de/api/interpreter", { method:"POST", body:"data="+encodeURIComponent(q),
-        headers:{ "Content-Type":"application/x-www-form-urlencoded" } });
-      if (!res.ok) throw new Error("HTTP "+res.status+(res.status===429||res.status===504 ? " (server busy, try again in a minute)" : ""));
-      json = await res.json();
-      try { sessionStorage.setItem("vam_ov", JSON.stringify(json)); } catch(e){}
+      json = await overpass(q);
+      try { sessionStorage.setItem("vam_ov2", JSON.stringify(json)); } catch(e){}
     }
-    gapLayer.clearLayers();
+    gapLayer.clearLayers(); knownLayer.clearLayers();
     let checked = 0, gaps = 0;
+    // Nodes can appear in both output blocks, so each check keeps its own "already seen" set.
+    const seenKnown = new Set(), seenGap = new Set();
+    let known = 0;
     (json.elements||[]).forEach(el => {
-      const t = el.tags || {};
+      const t = el.tags || {}, key = el.type + el.id;
+      const lat = el.center ? el.center.lat : el.lat, lng = el.center ? el.center.lon : el.lon;
+      const rating = rateKnown(t);
+      if (rating && !seenKnown.has(key) && typeof lat === "number") {
+        seenKnown.add(key); known++;
+        const k = { el, t, rating, lat, lng };
+        L.circleMarker([lat,lng], { radius:6, color:"#ffffff", weight:2, fillColor:RATING[rating].hex, fillOpacity:1, bubblingMouseEvents:false })
+          .on("click", () => showKnown(k)).addTo(knownLayer);
+      }
+      // Gap check: only footways, crossings and kerbs, from the block that carries full geometry.
+      if (el.center || seenGap.has(key)) return;
+      if (!(t.highway === "footway" || t.footway === "crossing" || t.highway === "crossing" || t.kerb)) return;
+      if (el.type === "way" && !el.geometry) return;
+      seenGap.add(key);
       const crossing = t.highway === "crossing" || t.footway === "crossing";
       const need = crossing ? ["kerb","tactile_paving"] : (t.highway === "footway" ? ["wheelchair"] : ["tactile_paving"]);
       const missing = need.filter(k => !t[k]);
@@ -603,10 +640,24 @@ async function checkOsm(){
         L.circleMarker([el.lat,el.lon], { radius:7, color:"#7b3fbf", weight:3, fillColor:"#fff", fillOpacity:1, bubblingMouseEvents:false }).on("click", e => { L.DomEvent.stop(e); showGap(g); }).addTo(gapLayer);
       }
     });
-    state.gapCount = gaps; setOverlay("gaps", true);
-    done(checked ? checked+" mapped footway/crossing features checked; "+gaps+" are missing accessibility tags (purple)."
-                 : "OpenStreetMap has almost no footways or crossings mapped here yet. That is itself a gap the survey can help fill.");
-  } catch(err) { done("Could not reach the Overpass API: "+err.message); }
+    state.gapCount = gaps; state.knownCount = known; osmLoaded = true;
+    if (!quiet) { setOverlay("gaps", true); setOverlay("known", true); }
+    done(known+" places already have accessibility info in OpenStreetMap (coloured dots). "+
+      (checked ? checked+" mapped footways/crossings checked; "+gaps+" are missing accessibility tags (purple)."
+               : "Almost no footways or crossings are mapped here yet. That is itself a gap the survey can help fill."));
+  } catch(err) { done("Could not reach OpenStreetMap's Overpass servers: "+err.message); }
+}
+function showKnown(k){
+  const rows = Object.keys(TAG_LABEL).filter(key => k.t[key]).map(key =>
+    '<div><dt>'+esc(key)+'</dt><dd>'+esc((TAG_LABEL[key][k.t[key]]) || k.t[key])+' <code>'+esc(key)+'='+esc(k.t[key])+'</code></dd></div>');
+  const note = k.t["wheelchair:description"] || k.t["wheelchair:description:en"];
+  openPanel(
+    '<h2>'+esc(knownName(k.t))+'</h2><span class="chip osm"><span class="sev" style="background:'+RATING[k.rating].hex+'"></span>'+RATING[k.rating].label+' &middot; in OpenStreetMap</span>'+
+    '<dl class="rows">'+rows.join("")+(note ? '<div><dt>Note</dt><dd>'+esc(note)+'</dd></div>' : '')+'</dl>'+
+    '<div class="callout"><b>Recorded by OpenStreetMap mappers</b>Not checked by this project. Things change: if you see it is different on the ground, correct it in MapComplete.</div>'+
+    '<div class="actions"><a class="btn primary" href="'+mcLink(k.lat,k.lng)+'" target="_blank" rel="noopener">Check or correct in MapComplete</a>'+
+    '<a class="btn" href="https://www.openstreetmap.org/'+k.el.type+'/'+k.el.id+'" target="_blank" rel="noopener">View on OSM</a></div>',
+    { kind:"known", k });
 }
 function showGap(g){
   openPanel(
@@ -660,8 +711,11 @@ function showQuestions(){
       '<div class="q"><label for="fDesc"><b>Anything else?</b></label><p class="why" style="margin:4px 0 8px">Where exactly, and how it affects people. Optional.</p><textarea id="fDesc" placeholder="e.g. No dropped kerb at the crossing outside the bank, wheelchair users have to go into the road"></textarea></div>'+
       '<div class="q"><label for="fPhoto"><b>Add your own photo</b></label><p class="why" style="margin:4px 0 8px">Optional. Only photos you took yourself, please.</p><input type="file" id="fPhoto" accept="image/*"></div>'+
       (draft.mly ? '<div class="callout"><b>Evidence</b>Linked to a Mapillary photo by '+esc(draft.mly.creator)+'.</div>' : '')+
-      '<div class="actions"><button class="btn primary" type="submit">Save report</button><button class="btn" type="button" data-act="cancelAdd">Cancel</button></div>'+
-      '<p class="note">Saved in this browser only, until shared storage is added.</p>'+
+      (supaOn ? '<div class="q"><label class="opt" style="padding:0"><input type="checkbox" id="fShare" checked><span><b>Share publicly</b>'+
+        '<small>Shown to everyone after a quick review. Only the location, answers and note are sent; your photo stays on this device. No name or contact details are collected.</small></span></label></div>' : '')+
+      '<input type="text" id="fWeb" name="website" class="sr" tabindex="-1" autocomplete="off" aria-hidden="true">'+
+      '<div class="actions"><button class="btn primary" type="submit" id="fSave">Save report</button><button class="btn" type="button" data-act="cancelAdd">Cancel</button></div>'+
+      '<p class="note">'+(supaOn ? 'A copy is also kept in this browser.' : 'Saved in this browser only, until shared storage is switched on.')+'</p>'+
     '</form>',
     { kind:"questions" });
 }
@@ -685,13 +739,44 @@ panel.addEventListener("submit", async e => {
   const f = e.target, q = QUESTIONS[draft.cat];
   const sev = (f.querySelector('input[name=sev]:checked')||{}).value || "med";
   const detail = (f.querySelector('input[name=detail]:checked')||{}).value || "";
+  $("fSave").disabled = true;
   const photo = await readPhoto($("fPhoto").files[0]);
   const r = { id:"u"+Date.now(), lat:draft.latlng.lat, lng:draft.latlng.lng, cat:draft.cat, sev,
-    tags: q && detail ? { [q.key]: detail } : {}, desc: $("fDesc").value.trim(), photo,
+    tags: q && detail ? { [q.key]: detail } : {}, desc: $("fDesc").value.trim().slice(0,1000), photo,
     mly: draft.mly ? { id:draft.mly.id, creator:draft.mly.creator, thumb:draft.mly.thumb } : null, ts:Date.now(), src:"user" };
+  let msg = "Report saved in this browser.";
+  const share = supaOn && $("fShare") && $("fShare").checked;
+  if (share && !$("fWeb").value) {   // fWeb is a hidden field only spam bots fill in
+    try { await submitShared(r); r.shared = "pending"; msg = "Sent for review. It will appear for everyone once approved."; }
+    catch(err) { r.shared = "failed"; msg = "Couldn't reach the shared database, so it's saved in this browser only."; }
+  }
   userReports.unshift(r); store.save(userReports); draft = null;
-  render(); showFeature(r); toast("Report saved in this browser.");
+  render(); showFeature(r); toast(msg);
 });
+
+// ---------- Shared reports (Supabase, only when configured) ----------
+// Older projects use a JWT anon key (also sent as Bearer); newer "sb_publishable_" keys go in the apikey header only.
+const supaHeaders = () => SUPABASE_ANON_KEY.startsWith("eyJ")
+  ? { apikey:SUPABASE_ANON_KEY, Authorization:"Bearer "+SUPABASE_ANON_KEY } : { apikey:SUPABASE_ANON_KEY };
+async function loadCommunity(){
+  if (!supaOn) return;
+  try {
+    const res = await fetch(SUPABASE_URL+"/rest/v1/reports?select=id,created_at,lat,lng,cat,sev,tags,descr,mly_id,mly_creator&status=eq.approved&order=created_at.desc&limit=1000",
+      { headers:supaHeaders() });
+    if (!res.ok) throw new Error("HTTP "+res.status);
+    community = (await res.json()).filter(r => typeof r.lat === "number" && typeof r.lng === "number").map(r => ({
+      id:"c"+r.id, lat:r.lat, lng:r.lng, cat: CATS[r.cat] ? r.cat : "", sev: SEV[r.sev] ? r.sev : "", tags: r.tags || {}, desc: r.descr || "",
+      mly: r.mly_id ? { id:r.mly_id, creator:r.mly_creator || "Mapillary contributor" } : null, ts: Date.parse(r.created_at) || 0, src:"community" }));
+    render();
+  } catch(err) { console.warn("Shared reports unavailable:", err); }
+}
+async function submitShared(r){
+  const res = await fetch(SUPABASE_URL+"/rest/v1/reports", { method:"POST",
+    headers:{ ...supaHeaders(), "Content-Type":"application/json", Prefer:"return=minimal" },
+    body: JSON.stringify({ lat:r.lat, lng:r.lng, cat:r.cat, sev:r.sev, tags:r.tags, descr:r.desc,
+      mly_id: r.mly ? String(r.mly.id) : null, mly_creator: r.mly ? r.mly.creator : null }) });
+  if (!res.ok) throw new Error("HTTP "+res.status);
+}
 
 // ---------- Panel actions ----------
 const ACTIONS = {
@@ -706,7 +791,7 @@ const ACTIONS = {
   type: d => { state.types.has(d.k) ? state.types.delete(d.k) : state.types.add(d.k); render(); showLayers(true); },
   sev: d => { state.sevs.has(d.k) ? state.sevs.delete(d.k) : state.sevs.add(d.k); render(); showLayers(true); },
   loadMly: loadMapillary,
-  checkOsm: checkOsm,
+  checkOsm: () => checkOsm(false),
   export: () => {
     const out = allRecords().map(({photo,id,...r}) => ({ ...r, ...(r.src==="survey" ? {photo} : {}), source: SRC[r.src] }));
     const blob = new Blob([JSON.stringify({ exported:new Date().toISOString(), license:"CC-BY-SA 4.0", reports:out }, null, 2)], { type:"application/json" });
@@ -780,8 +865,29 @@ function showWelcome(){
 ACTIONS.welcomeAdd = () => startAdd();
 ACTIONS.welcomeAbout = () => { closePanel(); openAbout("t-why"); };
 
+// Live count of Om's OpenStreetMap edits: public, dated proof of contribution. Shown only once there is at least one edit.
+async function loadOsmContrib(){
+  if (!OSM_USERNAME) return;
+  try {
+    const api = "https://api.openstreetmap.org/api/0.6/";
+    const cs = await (await fetch(api+"changesets.json?display_name="+encodeURIComponent(OSM_USERNAME)+"&limit=1")).json();
+    const uid = cs.changesets && cs.changesets[0] && cs.changesets[0].uid;
+    if (!uid) return;
+    const u = await (await fetch(api+"users.json?users="+uid)).json();
+    const count = u.users[0].user.changesets.count;
+    if (!count) return;
+    const el = $("osmContrib");
+    el.innerHTML = '<b>'+count+'</b> edit'+(count === 1 ? '' : 's')+' to OpenStreetMap by <a href="https://www.openstreetmap.org/user/'+
+      encodeURIComponent(OSM_USERNAME)+'/history" target="_blank" rel="noopener">'+esc(OSM_USERNAME)+'</a> (live count from OpenStreetMap).';
+    el.hidden = false;
+  } catch(err) { console.warn("OSM contribution count unavailable:", err); }
+}
+
 render();
 if (lsGet("vam_seen","") !== "1") { showWelcome(); lsSet("vam_seen","1"); }
+checkOsm(true);
+loadCommunity();
+loadOsmContrib();
 </script>
 </body>
 </html>

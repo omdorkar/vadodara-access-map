@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Street Report · Vadodara Access Map</title>
+<style>
+  :root { --fg:#1b1f23; --muted:#5b6670; --line:#d9dee3; --soft:#f4f6f8; --accent:#0b6e4f; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#fff; color:var(--fg); font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:900px; margin:0 auto; padding:32px 20px 48px; }
+  a { color:var(--accent); }
+  .toolbar { display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-bottom:24px; }
+  .btn { border:1px solid var(--line); background:#fff; color:var(--fg); border-radius:8px; padding:8px 12px; font:inherit; cursor:pointer; text-decoration:none; }
+  .btn.primary { background:var(--accent); border-color:transparent; color:#fff; font-weight:600; }
+  h1 { font-size:26px; line-height:1.2; margin:0 0 6px; }
+  .meta { color:var(--muted); font-size:14px; margin:0; }
+  h2 { font-size:18px; margin:32px 0 10px; padding-bottom:6px; border-bottom:2px solid var(--fg); }
+  h2 small { font-weight:400; color:var(--muted); font-size:14px; }
+  .summary { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-top:18px; }
+  .stat { border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .stat b { display:block; font-size:24px; line-height:1.1; }
+  .stat span { color:var(--muted); font-size:13px; }
+  table.counts { border-collapse:collapse; width:100%; font-size:14px; margin-top:6px; }
+  table.counts th, table.counts td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  table.counts td.n { text-align:right; font-variant-numeric:tabular-nums; }
+  .item { display:grid; grid-template-columns:150px 1fr; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); break-inside:avoid; }
+  .item img { width:150px; height:112px; object-fit:cover; border-radius:6px; background:var(--soft); display:block; }
+  .item .nophoto { width:150px; height:112px; border-radius:6px; background:var(--soft); color:var(--muted); display:grid; place-items:center; font-size:12px; }
+  .item h3 { margin:0 0 2px; font-size:16px; }
+  .ref { color:var(--muted); font-weight:400; font-size:13px; margin-right:6px; }
+  .sev { display:inline-block; font-size:12px; font-weight:700; padding:1px 8px; border-radius:999px; color:#fff; vertical-align:2px; margin-left:6px; }
+  .item dl { margin:6px 0 0; display:grid; grid-template-columns:110px 1fr; gap:3px 10px; font-size:14px; }
+  .item dt { color:var(--muted); }
+  .item dd { margin:0; overflow-wrap:anywhere; }
+  .fix { font-weight:600; }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--soft); border:1px solid var(--line); border-radius:5px; padding:0 4px; }
+  .empty { border:2px dashed var(--line); border-radius:12px; padding:24px; text-align:center; color:var(--muted); margin-top:24px; }
+  .notes li { margin:4px 0; }
+  footer { margin-top:36px; color:var(--muted); font-size:13px; }
+  @media (max-width:560px) { .item { grid-template-columns:1fr; } .item img, .item .nophoto { width:100%; height:auto; aspect-ratio:4/3; } }
+  @media print {
+    @page { margin:14mm; }
+    .toolbar { display:none; }
+    main { padding:0; max-width:none; }
+    a { color:inherit; text-decoration:none; }
+    h2 { break-after:avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="toolbar">
+    <a class="btn" href="./">← Back to the map</a>
+    <button class="btn primary" id="printBtn" type="button">Print / save as PDF</button>
+  </div>
+  <header>
+    <h1>Mobility barriers on footpaths and crossings<br>Alkapuri, Sayaji Baug &amp; railway station area, Vadodara</h1>
+    <p class="meta" id="meta">Field survey by Om Dorkar</p>
+  </header>
+  <div id="content"></div>
+
+  <h2>About this report</h2>
+  <ul class="notes">
+    <li><b>What it covers:</b> only barriers photographed on site during the field survey. Sample data and unreviewed visitor reports are not included.</li>
+    <li><b>Severity:</b> High = a wheelchair user cannot pass. Medium = possible but difficult or unsafe. Low = inconvenient.</li>
+    <li><b>Locations</b> come from each photo's GPS, which is accurate to about 5–15 m. Street names come from OpenStreetMap and were checked by hand where needed.</li>
+    <li><b>Suggested fixes</b> are general starting points, not engineering designs.</li>
+    <li>Each item links to its exact location. The live map with every photo is at <a href="https://omdorkar.github.io/vadodara-access-map/">omdorkar.github.io/vadodara-access-map</a>.</li>
+  </ul>
+  <footer>
+    Data and photos: CC-BY-SA 4.0, Vadodara Access Map by Om Dorkar. Map data © OpenStreetMap contributors (ODbL).
+    Source: <a href="https://github.com/omdorkar/vadodara-access-map">github.com/omdorkar/vadodara-access-map</a>
+  </footer>
+</main>
+
+<script src="data/vocab.js"></script>
+<script src="data/survey.js"></script>
+<script>
+const { CATS, SEV, QUESTIONS, OSM_KEYS, fixFor } = window.VAM_VOCAB;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safePath = u => /^photos\/[\w.\-\/]+$/.test(String(u||"")) ? u : "";
+const fmt = ts => new Date(ts).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" });
+const SEV_ORDER = { high:0, med:1, low:2 };
+
+// Survey records only, with a location. Sample and visitor data never go into this report.
+const items = (Array.isArray(window.SURVEY) ? window.SURVEY : [])
+  .filter(r => typeof r.lat === "number" && typeof r.lng === "number");
+
+$("printBtn").onclick = () => window.print();
+const dates = items.map(r => r.ts).filter(Boolean).sort((a,b) => a-b);
+$("meta").textContent = "Field survey by Om Dorkar" +
+  (dates.length ? " · surveyed " + (fmt(dates[0]) === fmt(dates[dates.length-1]) ? fmt(dates[0]) : fmt(dates[0]) + " – " + fmt(dates[dates.length-1])) : "") +
+  " · report generated " + fmt(Date.now());
+
+function answer(r){
+  const q = QUESTIONS[r.cat]; if (!q || !r.tags) return "";
+  const v = r.tags[q.key]; if (!v) return "";
+  const o = q.opts.find(o => o[0] === v);
+  return o ? o[1] : v;
+}
+
+if (!items.length) {
+  $("content").innerHTML = '<div class="empty"><b>No field-survey data yet.</b><br>This report fills in automatically once survey photos are processed. It never includes sample data.</div>';
+} else {
+  const count = (arr, key) => arr.reduce((m, r) => (m[r[key] || ""] = (m[r[key] || ""] || 0) + 1, m), {});
+  const bySev = count(items, "sev"), byCat = count(items, "cat");
+  const streets = {};
+  items.forEach(r => { const s = r.street || "Street not recorded"; (streets[s] = streets[s] || []).push(r); });
+  // Streets with the most high-severity barriers first, then by total.
+  const streetNames = Object.keys(streets).sort((a,b) =>
+    streets[b].filter(r => r.sev === "high").length - streets[a].filter(r => r.sev === "high").length || streets[b].length - streets[a].length || a.localeCompare(b));
+
+  let n = 0, html = '';
+  html += '<div class="summary">'+
+    '<div class="stat"><b>'+items.length+'</b><span>barriers documented</span></div>'+
+    '<div class="stat"><b>'+(bySev.high||0)+'</b><span>high severity (blocks access)</span></div>'+
+    '<div class="stat"><b>'+(bySev.med||0)+'</b><span>medium severity</span></div>'+
+    '<div class="stat"><b>'+streetNames.length+'</b><span>streets covered</span></div>'+
+  '</div>';
+  html += '<h2>By type</h2><table class="counts"><tbody>'+
+    Object.entries(byCat).sort((a,b) => b[1]-a[1]).map(([k,v]) => '<tr><td>'+esc(CATS[k] ? CATS[k].label : "Type not recorded")+'</td><td class="n">'+v+'</td></tr>').join("")+
+    '</tbody></table>';
+
+  streetNames.forEach(s => {
+    const list = streets[s].slice().sort((a,b) => (SEV_ORDER[a.sev] ?? 3) - (SEV_ORDER[b.sev] ?? 3));
+    const area = list.find(r => r.area);
+    html += '<h2>'+esc(s)+' <small>'+(area ? esc(area.area)+' · ' : '')+list.length+' barrier'+(list.length === 1 ? '' : 's')+'</small></h2>';
+    list.forEach(r => {
+      n++;
+      const ref = "B-" + String(n).padStart(2, "0");
+      const sev = SEV[r.sev], cat = CATS[r.cat];
+      const osm = r.tags ? Object.entries(r.tags).filter(([k,v]) => OSM_KEYS.includes(k) && v !== "broken") : [];
+      const where = r.lat.toFixed(5)+", "+r.lng.toFixed(5);
+      const img = safePath(r.thumb || r.photo);
+      html += '<article class="item">'+
+        (img ? '<a href="'+esc(safePath(r.photo) || img)+'"><img src="'+esc(img)+'" alt="Photo of barrier '+ref+'" loading="lazy"></a>' : '<div class="nophoto">No photo</div>')+
+        '<div><h3><span class="ref">'+ref+'</span>'+esc(cat ? cat.label : "Type not recorded")+
+          (sev ? '<span class="sev" style="background:'+sev.hex+'">'+sev.label+'</span>' : '')+'</h3>'+
+        '<dl>'+
+          (answer(r) ? '<dt>Detail</dt><dd>'+esc(answer(r))+'</dd>' : '')+
+          (r.desc ? '<dt>Observed</dt><dd>'+esc(r.desc)+'</dd>' : '')+
+          (cat ? '<dt>Suggested fix</dt><dd class="fix">'+esc(fixFor(r.cat, r.tags))+'</dd>' : '')+
+          '<dt>Location</dt><dd><a href="https://www.openstreetmap.org/?mlat='+r.lat.toFixed(6)+'&mlon='+r.lng.toFixed(6)+'#map=19/'+r.lat.toFixed(6)+'/'+r.lng.toFixed(6)+'">'+where+'</a></dd>'+
+          (r.ts ? '<dt>Photographed</dt><dd>'+fmt(r.ts)+'</dd>' : '')+
+          (osm.length ? '<dt>OSM tag</dt><dd>'+osm.map(([k,v]) => '<code>'+esc(k)+'='+esc(v)+'</code>').join(" ")+'</dd>' : '')+
+          '<dt>Photo</dt><dd>'+esc(r.credit || "Field survey")+(r.license ? ', '+esc(r.license) : '')+'</dd>'+
+        '</dl></div></article>';
+    });
+  });
+  $("content").innerHTML = html;
+}
+</script>
+</body>
+</html>
