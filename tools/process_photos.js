@@ -4,7 +4,23 @@
 // Reads   photos/originals/*.{jpg,jpeg,heic,png}  and optional photos/notes.csv (file,type,severity,note)
 // Writes  photos/web/<name>.jpg (1280px) and <name>-thumb.jpg (320px), both with all metadata removed,
 //         and data/survey.js. Existing type/severity/note values in data/survey.js are kept on re-runs.
+//         Each located photo also gets a street name from OpenStreetMap's Nominatim (kept on re-runs; edit by hand if wrong).
 ObjC.import('Foundation'); ObjC.import('ImageIO');
+
+const app = Application.currentApplication(); app.includeStandardAdditions = true;
+let lastLookup = 0;
+// Street and area names for a point, via Nominatim (max 1 request per second, identified, per its usage policy).
+function lookupStreet(lat, lng){
+  const wait = 1.1 - (Date.now() - lastLookup) / 1000;
+  if (wait > 0) delay(wait);
+  lastLookup = Date.now();
+  try {
+    const out = app.doShellScript("curl -s --max-time 20 -A 'VadodaraAccessMap/1.0 (+https://github.com/omdorkar/vadodara-access-map)' " +
+      "'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&lat=" + Number(lat).toFixed(6) + "&lon=" + Number(lng).toFixed(6) + "'");
+    const a = JSON.parse(out).address || {};
+    return { street: a.road || a.pedestrian || a.footway || "", area: a.suburb || a.neighbourhood || a.quarter || "" };
+  } catch(e) { return null; }
+}
 
 const CATS = ["broken_ramp","missing_ramp","obstacle","uneven","no_tactile","stairs_only","lighting"];
 const SEVS = ["high","med","low"];
@@ -100,6 +116,13 @@ function run(argv){
     // Manual placement for photos without GPS: set lat/lng by hand in data/survey.js; it is kept on re-runs.
     if (r.lat === null && typeof p.lat === "number") { r.lat = p.lat; r.lng = p.lng; r.placed = "manual"; }
     if (r.lat === null) noGps.push(f);
+    // Hand-added detail answers, e.g. "tags": {"kerb": "raised"}, are kept on re-runs.
+    if (p.tags && typeof p.tags === "object") r.tags = p.tags;
+    if (p.street || p.area) { r.street = p.street || ""; r.area = p.area || ""; }
+    else if (r.lat !== null) {
+      const s = lookupStreet(r.lat, r.lng);
+      if (s) { r.street = s.street; r.area = s.area; } else warnings.push(f + ": street name lookup failed (will retry next run)");
+    }
     if (r.cat && CATS.indexOf(r.cat) < 0) warnings.push(f + ": unknown type '" + r.cat + "'");
     if (r.sev && SEVS.indexOf(r.sev) < 0) warnings.push(f + ": unknown severity '" + r.sev + "'");
     records.push(r);
