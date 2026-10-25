@@ -279,7 +279,7 @@
 <script>
 // ---------- Settings: each feature switches on when its value is filled in ----------
 // Mapillary client token (starts with MLY|). Designed for public browser use. Can also be entered under Layers & filters.
-const MAPILLARY_TOKEN = "";
+const MAPILLARY_TOKEN = "MLY|29011422828469872|1bb408ddfd46eb46254d2ee409d054b9";
 // Om's OpenStreetMap username, for the live "edits to OpenStreetMap" count.
 const OSM_USERNAME = "Om Dorkar";
 // Supabase project URL and *anon* key (public by design; protected by row-level security). Never the service_role key.
@@ -513,18 +513,19 @@ function setOverlay(k, on){
 }
 
 // ---------- Mapillary ----------
-async function loadMapillary(){
+// area: bounds to search (the study area on page load); otherwise the current view, which must be zoomed in.
+async function loadMapillary(area){
   const input = $("mlyToken");
   const token = MAPILLARY_TOKEN || (input ? input.value.trim() : lsGet("vam_mly",""));
   const done = msg => { state.mlyStatus = msg; if (current && current.kind === "layers") showLayers(true); };
   if (!token) return done("Enter a Mapillary client token first.");
   if (!MAPILLARY_TOKEN) lsSet("vam_mly", token);
-  if (map.getZoom() < 15) return done("Zoom in to street level first, so the search area is small enough.");
-  const b = map.getBounds();
+  if (!area && map.getZoom() < 15) return done("Zoom in to street level first, so the search area is small enough.");
+  const b = area || map.getBounds();
   const bbox = [b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].map(n=>n.toFixed(5)).join(",");
   done("Loading street photos…");
   try {
-    const res = await fetch("https://graph.mapillary.com/images?fields=id,geometry,thumb_256_url,thumb_1024_url,captured_at,creator&limit=150&bbox="+bbox+"&access_token="+encodeURIComponent(token));
+    const res = await fetch("https://graph.mapillary.com/images?fields=id,geometry,thumb_256_url,thumb_1024_url,captured_at,creator&limit=500&bbox="+bbox+"&access_token="+encodeURIComponent(token));
     const json = await res.json().catch(()=>({}));
     if (!res.ok) throw new Error((json.error && json.error.message) || ("HTTP "+res.status));
     const imgs = (json.data||[]).filter(d => d.geometry && d.geometry.coordinates);
@@ -537,7 +538,7 @@ async function loadMapillary(){
         .on("click", () => showMly(p)).addTo(mlyLayer);
     });
     state.mlyCount = imgs.length; setOverlay("mly", true);
-    done(imgs.length ? imgs.length+" street photos in view. Tap a green dot to look, then mark any barrier you can see."
+    done(imgs.length ? imgs.length+" street photos "+(area ? "in the study area" : "in view")+". Tap a green dot to look, then mark any barrier you can see."
                      : "No Mapillary photos here yet. Try another street, or add photos with the Mapillary app.");
   } catch(err) { done("Could not load Mapillary photos: "+err.message); }
 }
@@ -790,7 +791,7 @@ const ACTIONS = {
   base: d => { map.removeLayer(BASES[base]); base = d.base; BASES[base].addTo(map); showLayers(true); },
   type: d => { state.types.has(d.k) ? state.types.delete(d.k) : state.types.add(d.k); render(); showLayers(true); },
   sev: d => { state.sevs.has(d.k) ? state.sevs.delete(d.k) : state.sevs.add(d.k); render(); showLayers(true); },
-  loadMly: loadMapillary,
+  loadMly: () => loadMapillary(),
   checkOsm: () => checkOsm(false),
   export: () => {
     const out = allRecords().map(({photo,id,...r}) => ({ ...r, ...(r.src==="survey" ? {photo} : {}), source: SRC[r.src] }));
@@ -888,6 +889,7 @@ if (lsGet("vam_seen","") !== "1") { showWelcome(); lsSet("vam_seen","1"); }
 checkOsm(true);
 loadCommunity();
 loadOsmContrib();
+if (MAPILLARY_TOKEN) loadMapillary(STUDY);
 </script>
 </body>
 </html>

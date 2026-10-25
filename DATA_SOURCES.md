@@ -19,7 +19,7 @@ Every source used on the site, with its licence and how it is used. Anything not
 ## Checked facts (18 Oct 2026)
 - Study-area bounding box: 22.298–22.322 N, 73.160–73.200 E.
 - OSM had 26 footway ways mapped there (2 tagged as crossings). None carried `kerb`, `wheelchair` or `tactile_paving` tags.
-- Mapillary coverage of the area has not been checked yet (needs a client token).
+- Mapillary coverage of the area (checked 25 Oct 2026): only 22 street-level images, 21 from 2014–2015 by one contributor and 1 from 2021. The field survey's Mapillary capture will be the first recent imagery of these streets.
 
 ## Checked facts (22 Oct 2026)
 - 25 features in the study area had accessibility info in OSM: 24 with a `wheelchair` tag (15 yes, 7 no, 1 limited, 1 designated) and 1 with `tactile_paving=incorrect`. None had a `kerb` tag.
