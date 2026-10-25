@@ -1,6 +1,6 @@
 # Vadodara Access Map
 
-A free, open-source map of physical-mobility barriers (broken or missing ramps, blocked footpaths, missing kerb cuts, no tactile paving, steps with no alternative) in one small area of Vadodara, India: **Alkapuri, Sayaji Baug and the railway station**. It was inspired by the University of Alberta Mobility Mapping Project.
+A free, open-source map of physical-mobility barriers (broken or missing ramps, blocked footpaths, missing kerb cuts, no tactile paving, steps with no alternative) in Vadodara and its outskirts, India. The survey started in **Alkapuri, Sayaji Baug and the railway station** and has since grown to other parts of the city. It was inspired by the University of Alberta Mobility Mapping Project.
 
 <!-- Screenshot: add docs/screenshot.png once the survey photos are on the map. -->
 
@@ -18,7 +18,7 @@ The method is inspired by the University of Alberta's [Atlas / Click&Push](https
 **Live map: https://omdorkar.github.io/vadodara-access-map/** · Built by Om Dorkar · OpenStreetMap: [Om Dorkar](https://www.openstreetmap.org/user/Om%20Dorkar)
 
 ## What's on the map
-- **Field survey pins** (square): geotagged photos taken on foot in the study area, each credited. Tap one for the photo, severity, details and location.
+- **Field survey pins** (square): geotagged photos taken on foot in Vadodara and its outskirts, each credited. Tap one for the photo, severity, details and location.
 - **Your reports** (ringed): reports a visitor makes, stored in their own browser for now (exportable as JSON).
 - **Sample data** (faded, dashed): 16 illustrative pins, clearly labelled. They are not findings, and they hide automatically once real survey data exists.
 - **Mapillary photos** (green dots): real street-level imagery (CC-BY-SA). You can mark a barrier you see in a photo.

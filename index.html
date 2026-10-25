@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vadodara Access Map</title>
-<meta name="description" content="An open map of physical-mobility barriers in Alkapuri, Sayaji Baug and the railway station area of Vadodara, India.">
+<meta name="description" content="An open map of physical-mobility barriers in Vadodara and its outskirts, India, starting with Alkapuri, Sayaji Baug and the railway station area.">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root {
@@ -67,6 +67,7 @@
   .chip.survey { background:#d6f3e6; color:#0b4d37; border-color:#a9e3c9; }
   .chip.sample { background:#fff3cd; color:#664d03; border-color:#ffe69c; }
   .chip.user { background:#e3eefc; color:#163d73; border-color:#bcd3f5; }
+  .chip.context { background:#e4e7eb; color:#2f3a45; border-color:#c9ced4; }
   .chip.gap { background:#efe4fb; color:#4a2378; border-color:#d8c3f2; }
   .chip.mly { background:#d9f7e6; color:#0a5a33; border-color:#aee8c8; }
   .chip.osm { background:#e6f0f7; color:#0f3d5c; border-color:#bcd6ea; }
@@ -133,6 +134,7 @@
   .pin.survey { border-radius:8px; box-shadow:0 0 0 2px #1b1f23, 0 2px 6px rgba(0,0,0,.4); }
   .pin.user { box-shadow:0 0 0 3px var(--accent), 0 1px 4px rgba(0,0,0,.45); }
   .pin.sample { opacity:.72; border-style:dashed; }
+  .pin.context { border-radius:4px; border-style:dotted; box-shadow:0 0 0 2px #5b6670, 0 2px 6px rgba(0,0,0,.4); }
 
   /* Placing a new point */
   #crosshair { position:fixed; z-index:1000; left:50%; top:50%; width:40px; height:52px; margin:-52px 0 0 -20px; pointer-events:none; filter:drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
@@ -204,7 +206,7 @@
   <div class="card modal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
     <button class="icon-btn x" data-close-about aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <h2 id="aboutTitle">Vadodara Access Map</h2>
-    <p class="muted" style="margin:0;color:var(--muted)">An open map of physical-mobility barriers in Alkapuri, Sayaji Baug and the railway station area.</p>
+    <p class="muted" style="margin:0;color:var(--muted)">An open map of physical-mobility barriers in Vadodara and its outskirts.</p>
     <div class="tabs" role="tablist">
       <button class="chipbtn" role="tab" data-tab="t-about" aria-pressed="true">About</button>
       <button class="chipbtn" role="tab" data-tab="t-why" aria-pressed="false">Why Vadodara</button>
@@ -289,7 +291,7 @@ const OVERPASS_SERVERS = ["https://overpass-api.de/api/interpreter", "https://ma
 
 // ---------- Vocabulary (shared with report.html, see data/vocab.js) ----------
 const { CATS, SEV, OSM_KEYS, QUESTIONS } = window.VAM_VOCAB;
-const SRC = { survey:"Field survey", community:"Community report (reviewed)", user:"Your report", sample:"Sample data" };
+const SRC = { survey:"Field survey", community:"Community report (reviewed)", user:"Your report", sample:"Sample data", context:"Documentation only" };
 const supaOn = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 // ---------- Icons (drawn for this project) ----------
@@ -343,7 +345,16 @@ const store = {
 };
 let userReports = store.load();
 let community = [];   // approved reports from Supabase
-const allRecords = () => [...SURVEY, ...community, ...userReports, ...SAMPLE];
+// Real photos kept as documentation (no footpath barrier shown, or far outside Vadodara); not part of the survey. Location approximate, placed by hand.
+const CONTEXT = [
+  { id:"c0", lat:22.4600, lng:73.5300, cat:"", sev:"", src:"context", ts:0, placed:"manual",
+    desc:"Road cut with warning tape on Pavagadh Hill, about 45 km from Vadodara. A road hazard, not a footpath barrier, so it is not one of the seven types. Exact spot not recorded.",
+    photo:"photos/context/pavagadh_road_cut_01.jpg", thumb:"photos/context/pavagadh_road_cut_01-thumb.jpg", credit:"Om Dorkar", license:"CC-BY-SA 4.0" },
+  { id:"c1", lat:22.34991, lng:73.1798044, cat:"", sev:"", src:"context", ts:0, placed:"manual",
+    desc:"Canal Road, Vadodara, on a foggy day. Roadside bushes and a view over buildings. No footpath barrier is visible in this photo, so it is kept as documentation only.",
+    photo:"photos/context/canal_road_01.jpg", thumb:"photos/context/canal_road_01-thumb.jpg", credit:"Om Dorkar", license:"CC-BY-SA 4.0" }
+];
+const allRecords = () => [...SURVEY, ...community, ...userReports, ...SAMPLE, ...CONTEXT];
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -375,7 +386,7 @@ const studyLayer = L.rectangle(STUDY, { color:"#0b6e4f", weight:2, dashArray:"6 
 
 const state = {
   // Sample pins only show while there is no real survey data; they can still be switched on under Layers.
-  src: { survey:true, community:true, user:true, sample: SURVEY.length === 0 },
+  src: { survey:true, community:true, user:true, sample: SURVEY.length === 0, context:true },
   types: new Set(Object.keys(CATS)),
   sevs: new Set(Object.keys(SEV)),
   overlays: { mly:true, gaps:false, known:true, study:true },
@@ -429,7 +440,8 @@ function osmTags(r){ return r.tags ? Object.entries(r.tags).filter(([k,v]) => OS
 function showFeature(r){
   const cat = CATS[r.cat], sev = SEV[r.sev];
   let photo = "";
-  if (r.src === "survey" && r.photo) photo = hero(r.thumb || r.photo, "Field survey photo of the barrier", "Photo: "+esc(r.credit||"Field survey")+(r.license ? " &middot; "+esc(r.license) : ""), r.photo);
+  if (r.src === "context" && r.photo) photo = hero(r.thumb || r.photo, "Documentation photo", "Photo: "+esc(r.credit||"")+(r.license ? " &middot; "+esc(r.license) : ""), r.photo);
+  else if (r.src === "survey" && r.photo) photo = hero(r.thumb || r.photo, "Field survey photo of the barrier", "Photo: "+esc(r.credit||"Field survey")+(r.license ? " &middot; "+esc(r.license) : ""), r.photo);
   else if (r.photo) photo = hero(r.photo, "Photo of the reported barrier", "Your photo (stored in this browser only)");
   else if (r.mly && r.mly.thumb) photo = hero(r.mly.thumb, "Mapillary street photo", '&copy; '+esc(r.mly.creator)+' via Mapillary &middot; CC-BY-SA 4.0', mlyLink(r.mly.id));
   const tags = osmTags(r);
@@ -442,7 +454,9 @@ function showFeature(r){
     tags.length ? ['OSM tags', tags.map(([k,v]) => '<code>'+esc(k)+'='+esc(v)+'</code>').join(" ")] : null,
     r.mly && !(r.photo) ? ['Photo', '<a href="'+mlyLink(r.mly.id)+'" target="_blank" rel="noopener">'+esc(r.mly.creator)+' via Mapillary</a>'] : null
   ].filter(Boolean);
-  const callout = r.src === "sample"
+  const callout = r.src === "context"
+    ? '<div class="callout"><b>Documentation only</b>A real photo by the project, kept for context. It does not show a footpath barrier, or it was taken far from Vadodara, so it is not counted in the survey totals. The location is approximate.</div>'
+    : r.src === "sample"
     ? '<div class="callout"><b>This is sample data</b>An invented example at an approximate location, shown so the map isn\'t empty. It is not a finding.</div>'
     : r.src === "community"
     ? '<div class="callout"><b>Reported by a visitor, reviewed</b>Checked for plausibility before publishing, but not verified on the ground by this project.</div>'
@@ -460,7 +474,7 @@ function showFeature(r){
     '<div class="actions">'+
       '<button class="btn" data-act="zoomTo">Zoom here</button>'+
       '<a class="btn" href="'+osmLink(r.lat,r.lng)+'" target="_blank" rel="noopener">OpenStreetMap</a>'+
-      (r.src !== "sample" ? '<a class="btn" href="'+mcLink(r.lat,r.lng)+'" target="_blank" rel="noopener">Add to OSM with MapComplete</a>' : '')+
+      (r.src !== "sample" && r.src !== "context" ? '<a class="btn" href="'+mcLink(r.lat,r.lng)+'" target="_blank" rel="noopener">Add to OSM with MapComplete</a>' : '')+
       (r.src === "user" ? '<button class="btn danger" data-act="deleteMine">Delete</button>' : '')+
     '</div>',
     { kind:"feature", r });
@@ -480,6 +494,7 @@ function showLayers(keepScroll){
     toggleRow("src","survey",'<div class="pin survey" style="--c:#c62828;width:22px;height:22px">'+icon("missing_ramp")+'</div>',"Field survey (verified)",cnt("survey"),state.src.survey)+
     toggleRow("src","user",'<div class="pin user" style="--c:#c62828;width:22px;height:22px">'+icon("obstacle")+'</div>',"Your reports",cnt("user"),state.src.user)+
     (supaOn ? toggleRow("src","community",'<div class="pin community" style="--c:#c62828;width:22px;height:22px">'+icon("broken_ramp")+'</div>',"Community reports (reviewed)",cnt("community"),state.src.community) : '')+
+    toggleRow("src","context",'<div class="pin context" style="--c:#6b7680;width:22px;height:22px">'+icon("unknown")+'</div>',"Documentation only (not counted)",cnt("context"),state.src.context)+
     toggleRow("src","sample",'<div class="pin sample" style="--c:#c62828;width:22px;height:22px">'+icon("uneven")+'</div>',"Sample data (not real)",cnt("sample"),state.src.sample)+
     '<h3>Barrier type</h3><div class="chips">'+Object.entries(CATS).map(([k,c]) =>
       '<button class="chipbtn" data-act="type" data-k="'+k+'" aria-pressed="'+state.types.has(k)+'">'+c.label+'</button>').join("")+'</div>'+
@@ -498,7 +513,7 @@ function showLayers(keepScroll){
     (osmLoaded ? '' : '<div class="actions" style="margin-top:8px"><button class="btn" data-act="checkOsm">Load OpenStreetMap data</button></div>')+
     (state.ovStatus ? '<p class="status">'+esc(state.ovStatus)+'</p>' : '')+
     '<h3>Other</h3>'+
-    toggleRow("ov","study",'<span class="swatch"><svg width="22" height="16"><rect x="1" y="1" width="20" height="14" fill="none" stroke="#0b6e4f" stroke-width="2" stroke-dasharray="4 3"/></svg></span>',"Study area outline","",state.overlays.study)+
+    toggleRow("ov","study",'<span class="swatch"><svg width="22" height="16"><rect x="1" y="1" width="20" height="14" fill="none" stroke="#0b6e4f" stroke-width="2" stroke-dasharray="4 3"/></svg></span>',"Core area outline (OSM checks)","",state.overlays.study)+
     '<div class="actions"><button class="btn" data-act="export">Export all as JSON</button>'+(userReports.length ? '<button class="btn danger" data-act="clearMine">Delete my reports</button>' : '')+'</div>',
     { kind:"layers" }, keepScroll);
 }
@@ -856,7 +871,7 @@ document.addEventListener("keydown", e => {
 function showWelcome(){
   openPanel(
     '<h2>Welcome</h2>'+
-    '<p>This map records barriers that make it hard to get around Alkapuri, Sayaji Baug and the railway station area in a wheelchair, with a pram, or on foot: broken ramps, high kerbs, blocked footpaths, missing tactile paving and steps with no alternative.</p>'+
+    '<p>This map records barriers that make it hard to get around Vadodara and its outskirts in a wheelchair, with a pram, or on foot: broken ramps, high kerbs, blocked footpaths, missing tactile paving and steps with no alternative.</p>'+
     (SURVEY.length
       ? '<div class="callout"><b>'+SURVEY.length+' barriers surveyed on foot</b>Square pins are from the field survey, each with a photo taken on site.</div>'
       : '<div class="callout"><b>Early stage</b>The field survey is under way. Until it\'s done, faded dashed pins are <b>sample data</b>, not real findings.</div>')+
