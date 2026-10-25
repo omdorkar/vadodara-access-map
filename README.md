@@ -18,9 +18,9 @@ The method is inspired by the University of Alberta's [Atlas / Click&Push](https
 **Live map: https://omdorkar.github.io/vadodara-access-map/** · Built by Om Dorkar · OpenStreetMap: [Om Dorkar](https://www.openstreetmap.org/user/Om%20Dorkar)
 
 ## What's on the map
-- **Field survey pins** (square): Om's own photos that show the barrier they are labelled with, each credited. Tap one for the photo, severity, details and location.
+- **Field survey pins** (square): Om's own photos, each credited. A few show the setting but not the barrier itself, and their notes say so. Tap one for the photo, severity, details and location.
 - **Your reports** (ringed): reports a visitor makes, stored in their own browser for now (exportable as JSON).
-- **Documentation only** (grey, dotted): Om's photos that do not clearly show a footpath barrier, or were taken far away (Pavagadh Hill). Not counted.
+- **Documentation only** (grey, dotted): photos that show no footpath barrier (Canal Road) or were taken far away (Pavagadh Hill). Not counted.
 - **Sample data** (faded, dashed): 16 illustrative pins, clearly labelled. They are not findings, and they hide automatically once real survey data exists.
 - **AI-suggested (unverified)** (purple diamonds, off by default): a few Mapillary street photos where a model (Claude) spotted a possible barrier. Nobody has checked them on the ground. They are not findings and are not counted.
 - **Mapillary photos** (green dots): real street-level imagery (CC-BY-SA). You can mark a barrier you see in a photo.

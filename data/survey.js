@@ -50,6 +50,38 @@ window.SURVEY = [
     "area": "Harni"
   },
   {
+    "file": "harni_side_road_01.png",
+    "lat": 22.3399156,
+    "lng": 73.216379,
+    "ts": null,
+    "cat": "missing_ramp",
+    "sev": "med",
+    "desc": "Side road near Harni Airport Road has no ramps (noted by the surveyor on site). The photo shows the wet ground beside the road in the monsoon, not the missing ramp itself.",
+    "photo": "photos/web/harni_side_road_01.jpg",
+    "thumb": "photos/web/harni_side_road_01-thumb.jpg",
+    "credit": "Om Dorkar",
+    "license": "CC-BY-SA 4.0",
+    "placed": "manual",
+    "street": "Side road near Harni Airport Road",
+    "area": "Harni"
+  },
+  {
+    "file": "median_mismatched_paving_01.jpg",
+    "lat": 22.3329866,
+    "lng": 73.1680683,
+    "ts": null,
+    "cat": "uneven",
+    "sev": "low",
+    "desc": "Median with mismatched paving: slabs and bricks of different sizes and colours, with gaps and different heights. Seen from above.",
+    "photo": "photos/web/median_mismatched_paving_01.jpg",
+    "thumb": "photos/web/median_mismatched_paving_01-thumb.jpg",
+    "credit": "Om Dorkar",
+    "license": "CC-BY-SA 4.0",
+    "placed": "manual",
+    "street": "",
+    "area": "Alkapuri"
+  },
+  {
     "file": "railway_station_back_steps_01.png",
     "lat": 22.310688,
     "lng": 73.180938,
@@ -64,6 +96,22 @@ window.SURVEY = [
     "placed": "manual",
     "street": "Vadodara Junction railway station (back side)",
     "area": "Station area"
+  },
+  {
+    "file": "road_no_footpath_poles_01.png",
+    "lat": 22.3456718,
+    "lng": 73.1647309,
+    "ts": null,
+    "cat": "uneven",
+    "sev": "high",
+    "desc": "There is no footpath or side road at all here, so people have to walk on the road. The asphalt edge is broken, electricity poles stand at the roadside, and the road is wet in the monsoon. Photographed from a car.",
+    "photo": "photos/web/road_no_footpath_poles_01.jpg",
+    "thumb": "photos/web/road_no_footpath_poles_01-thumb.jpg",
+    "credit": "Om Dorkar",
+    "license": "CC-BY-SA 4.0",
+    "placed": "manual",
+    "street": "",
+    "area": "Gorwa"
   },
   {
     "file": "sayajibaug_vinoba_bhave_rd_01.png",
@@ -112,5 +160,21 @@ window.SURVEY = [
     "placed": "manual",
     "street": "Dandia Bazaar Road",
     "area": "Nava Bazaar"
+  },
+  {
+    "file": "uneven_wet_path_stall_01.png",
+    "lat": 22.333812,
+    "lng": 73.181688,
+    "ts": null,
+    "cat": "uneven",
+    "sev": "med",
+    "desc": "Highly uneven path with no flat surface in the monsoon. Muddy ground and standing water cover the path, and a food stall and cart take up part of the width.",
+    "photo": "photos/web/uneven_wet_path_stall_01.jpg",
+    "thumb": "photos/web/uneven_wet_path_stall_01-thumb.jpg",
+    "credit": "Om Dorkar",
+    "license": "CC-BY-SA 4.0",
+    "placed": "manual",
+    "street": "",
+    "area": ""
   }
 ];
