@@ -310,7 +310,9 @@ const ICON_PATHS = {
 const icon = (k, color="#fff") => '<svg viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON_PATHS[k]||ICON_PATHS.unknown)+'</svg>';
 
 // ---------- Data ----------
-const STUDY = L.latLngBounds([22.298,73.160],[22.322,73.200]);
+const STUDY = L.latLngBounds([22.298,73.160],[22.322,73.200]);   // original core area, drawn as the dashed outline
+// Whole of Vadodara and its near outskirts: searched for Mapillary photos and OpenStreetMap accessibility data.
+const CITY = L.latLngBounds([22.24,73.10],[22.40,73.27]);
 
 // Approximate locations; descriptions are illustrative sample data.
 const SAMPLE = [
@@ -509,7 +511,7 @@ function showLayers(keepScroll){
     toggleRow("ov","known",'<span class="swatch"><svg width="22" height="14"><circle cx="5" cy="7" r="4" fill="#2e7d32" stroke="#fff" stroke-width="1.5"/><circle cx="11" cy="7" r="4" fill="#e08600" stroke="#fff" stroke-width="1.5"/><circle cx="17" cy="7" r="4" fill="#c62828" stroke="#fff" stroke-width="1.5"/></svg></span>',"Already known in OSM",state.knownCount,state.overlays.known)+
     '<p class="status">Places and kerbs where OSM mappers recorded wheelchair access, kerb height or tactile paving. Green accessible, orange limited, red not accessible.</p>'+
     toggleRow("ov","gaps",'<span class="swatch"><svg width="22" height="6"><line x1="1" y1="3" x2="21" y2="3" stroke="#7b3fbf" stroke-width="3" stroke-dasharray="5 3"/></svg></span>',"Possible gaps (unverified)",state.gapCount,state.overlays.gaps)+
-    '<p class="status">Footways and crossings in the study area with no kerb, wheelchair or tactile-paving tags.</p>'+
+    '<p class="status">Footways and crossings in Vadodara with no kerb, wheelchair or tactile-paving tags.</p>'+
     (osmLoaded ? '' : '<div class="actions" style="margin-top:8px"><button class="btn" data-act="checkOsm">Load OpenStreetMap data</button></div>')+
     (state.ovStatus ? '<p class="status">'+esc(state.ovStatus)+'</p>' : '')+
     '<h3>Other</h3>'+
@@ -537,13 +539,20 @@ async function loadMapillary(area){
   if (!MAPILLARY_TOKEN) lsSet("vam_mly", token);
   if (!area && map.getZoom() < 15) return done("Zoom in to street level first, so the search area is small enough.");
   const b = area || map.getBounds();
-  const bbox = [b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].map(n=>n.toFixed(5)).join(",");
+  const STEP = 0.05, cells = [];
+  for (let s0 = b.getSouth(); s0 < b.getNorth(); s0 += STEP)
+    for (let w0 = b.getWest(); w0 < b.getEast(); w0 += STEP)
+      cells.push([w0, s0, Math.min(w0+STEP, b.getEast()), Math.min(s0+STEP, b.getNorth())]);
   done("Loading street photos…");
   try {
-    const res = await fetch("https://graph.mapillary.com/images?fields=id,geometry,thumb_256_url,thumb_1024_url,captured_at,creator&limit=500&bbox="+bbox+"&access_token="+encodeURIComponent(token));
-    const json = await res.json().catch(()=>({}));
-    if (!res.ok) throw new Error((json.error && json.error.message) || ("HTTP "+res.status));
-    const imgs = (json.data||[]).filter(d => d.geometry && d.geometry.coordinates);
+    const seen = new Set(), imgs = [];
+    for (const c of cells) {
+      const bbox = c.map(n=>n.toFixed(5)).join(",");
+      const res = await fetch("https://graph.mapillary.com/images?fields=id,geometry,thumb_256_url,thumb_1024_url,captured_at,creator&limit=500&bbox="+bbox+"&access_token="+encodeURIComponent(token));
+      const json = await res.json().catch(()=>({}));
+      if (!res.ok) throw new Error((json.error && json.error.message) || ("HTTP "+res.status));
+      (json.data||[]).forEach(d => { if (d.geometry && d.geometry.coordinates && !seen.has(d.id)) { seen.add(d.id); imgs.push(d); } });
+    }
     mlyLayer.clearLayers();
     imgs.forEach(d => {
       const [lng,lat] = d.geometry.coordinates;
@@ -553,7 +562,7 @@ async function loadMapillary(area){
         .on("click", () => showMly(p)).addTo(mlyLayer);
     });
     state.mlyCount = imgs.length; setOverlay("mly", true);
-    done(imgs.length ? imgs.length+" street photos "+(area ? "in the study area" : "in view")+". Tap a green dot to look, then mark any barrier you can see."
+    done(imgs.length ? imgs.length+" street photos "+(area ? "across Vadodara" : "in view")+". Tap a green dot to look, then mark any barrier you can see."
                      : "No Mapillary photos here yet. Try another street, or add photos with the Mapillary app.");
   } catch(err) { done("Could not load Mapillary photos: "+err.message); }
 }
@@ -609,17 +618,17 @@ function knownName(t){
 let osmLoaded = false;
 async function checkOsm(quiet){
   const done = msg => { state.ovStatus = msg; if (current && current.kind === "layers") showLayers(true); };
-  const bb = [STUDY.getSouth(),STUDY.getWest(),STUDY.getNorth(),STUDY.getEast()].join(",");
-  const q = '[out:json][timeout:25];'+
+  const bb = [CITY.getSouth(),CITY.getWest(),CITY.getNorth(),CITY.getEast()].join(",");
+  const q = '[out:json][timeout:90];'+
     '(way["highway"="footway"]('+bb+');way["footway"="crossing"]('+bb+');node["highway"="crossing"]('+bb+');node["kerb"]('+bb+'););out tags geom;'+
     '(nwr["wheelchair"]('+bb+');nwr["kerb"]('+bb+');nwr["tactile_paving"]('+bb+'););out tags center;';
   if (!quiet) done("Querying OpenStreetMap…");
   try {
     let json = null;
-    try { json = JSON.parse(sessionStorage.getItem("vam_ov2")); } catch(e){}
+    try { json = JSON.parse(sessionStorage.getItem("vam_ov3")); } catch(e){}
     if (!json) {
       json = await overpass(q);
-      try { sessionStorage.setItem("vam_ov2", JSON.stringify(json)); } catch(e){}
+      try { sessionStorage.setItem("vam_ov3", JSON.stringify(json)); } catch(e){}
     }
     gapLayer.clearLayers(); knownLayer.clearLayers();
     let checked = 0, gaps = 0;
@@ -904,7 +913,7 @@ if (lsGet("vam_seen","") !== "1") { showWelcome(); lsSet("vam_seen","1"); }
 checkOsm(true);
 loadCommunity();
 loadOsmContrib();
-if (MAPILLARY_TOKEN) loadMapillary(STUDY);
+if (MAPILLARY_TOKEN) loadMapillary(CITY);
 </script>
 </body>
 </html>

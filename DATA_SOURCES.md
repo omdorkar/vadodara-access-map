@@ -23,3 +23,8 @@ Every source used on the site, with its licence and how it is used. Anything not
 
 ## Checked facts (22 Oct 2026)
 - 25 features in the study area had accessibility info in OSM: 24 with a `wheelchair` tag (15 yes, 7 no, 1 limited, 1 designated) and 1 with `tactile_paving=incorrect`. None had a `kerb` tag.
+
+## Checked facts (25 Oct 2026): whole-city layers
+- The Mapillary and OpenStreetMap layers now cover Vadodara and its near outskirts: 22.24–22.40 N, 73.10–73.27 E. The dashed outline on the map still shows the original core area.
+- Mapillary: 721 street-level images in that box (the API allows 0.01 square degrees per request, so the map asks cell by cell, 0.05 degrees each). Most are in the north and east; the south-west has almost none.
+- OpenStreetMap, same box: 62 wheelchair tags, 1 `tactile_paving` tag and no `kerb` tags among 166 mapped elements. Kerb height and tactile paving are almost entirely unmapped.
