@@ -1,6 +1,6 @@
 # Vadodara Access Map
 
-A free, open-source map of physical-mobility barriers (broken or missing ramps, blocked footpaths, missing kerb cuts, no tactile paving, steps with no alternative) in Vadodara and its outskirts, India. The survey started in **Alkapuri, Sayaji Baug and the railway station** and has since grown to other parts of the city. It was inspired by the University of Alberta Mobility Mapping Project.
+A free, open-source map of physical-mobility barriers (broken or missing ramps, blocked footpaths, missing kerb cuts, no tactile paving, steps with no alternative) in Vadodara and its outskirts, India. It is a **remote audit** (street-level photos and OpenStreetMap data) plus a small set of photos taken by Om Dorkar. It is not a full survey: see [docs/METHOD.md](docs/METHOD.md) for what was and was not done. It was inspired by the University of Alberta Mobility Mapping Project.
 
 <!-- Screenshot: add docs/screenshot.png once the survey photos are on the map. -->
 
@@ -18,9 +18,11 @@ The method is inspired by the University of Alberta's [Atlas / Click&Push](https
 **Live map: https://omdorkar.github.io/vadodara-access-map/** · Built by Om Dorkar · OpenStreetMap: [Om Dorkar](https://www.openstreetmap.org/user/Om%20Dorkar)
 
 ## What's on the map
-- **Field survey pins** (square): geotagged photos taken on foot in Vadodara and its outskirts, each credited. Tap one for the photo, severity, details and location.
+- **Field survey pins** (square): Om's own photos that show the barrier they are labelled with, each credited. Tap one for the photo, severity, details and location.
 - **Your reports** (ringed): reports a visitor makes, stored in their own browser for now (exportable as JSON).
+- **Documentation only** (grey, dotted): Om's photos that do not clearly show a footpath barrier, or were taken far away (Pavagadh Hill). Not counted.
 - **Sample data** (faded, dashed): 16 illustrative pins, clearly labelled. They are not findings, and they hide automatically once real survey data exists.
+- **AI-suggested (unverified)** (purple diamonds, off by default): a few Mapillary street photos where a model (Claude) spotted a possible barrier. Nobody has checked them on the ground. They are not findings and are not counted.
 - **Mapillary photos** (green dots): real street-level imagery (CC-BY-SA). You can mark a barrier you see in a photo.
 - **Already known in OSM** (green / orange / red dots): places and kerbs where OpenStreetMap mappers recorded wheelchair access, kerb height or tactile paving. These are other people's data, shown as context.
 - **OSM possible gaps** (purple dashes): mapped footways and crossings missing `kerb` / `wheelchair` / `tactile_paving` tags. This shows missing data, not a confirmed barrier, with a link to answer it in MapComplete. Off by default; switch it on under Layers & filters.

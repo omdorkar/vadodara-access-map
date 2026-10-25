@@ -68,6 +68,7 @@
   .chip.sample { background:#fff3cd; color:#664d03; border-color:#ffe69c; }
   .chip.user { background:#e3eefc; color:#163d73; border-color:#bcd3f5; }
   .chip.context { background:#e4e7eb; color:#2f3a45; border-color:#c9ced4; }
+  .chip.ai { background:#f3e8ff; color:#5b2a86; border-color:#d9b9f5; }
   .chip.gap { background:#efe4fb; color:#4a2378; border-color:#d8c3f2; }
   .chip.mly { background:#d9f7e6; color:#0a5a33; border-color:#aee8c8; }
   .chip.osm { background:#e6f0f7; color:#0f3d5c; border-color:#bcd6ea; }
@@ -310,7 +311,7 @@ const ICON_PATHS = {
 const icon = (k, color="#fff") => '<svg viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON_PATHS[k]||ICON_PATHS.unknown)+'</svg>';
 
 // ---------- Data ----------
-const STUDY = L.latLngBounds([22.298,73.160],[22.322,73.200]);   // original core area, drawn as the dashed outline
+const STUDY = L.latLngBounds([22.298,73.160],[22.322,73.200]);   // original core area, where the survey started
 // Whole of Vadodara and its near outskirts: searched for Mapillary photos and OpenStreetMap accessibility data.
 const CITY = L.latLngBounds([22.24,73.10],[22.40,73.27]);
 
@@ -354,7 +355,19 @@ const CONTEXT = [
     photo:"photos/context/pavagadh_road_cut_01.jpg", thumb:"photos/context/pavagadh_road_cut_01-thumb.jpg", credit:"Om Dorkar", license:"CC-BY-SA 4.0" },
   { id:"c1", lat:22.34991, lng:73.1798044, cat:"", sev:"", src:"context", ts:0, placed:"manual",
     desc:"Canal Road, Vadodara, on a foggy day. Roadside bushes and a view over buildings. No footpath barrier is visible in this photo, so it is kept as documentation only.",
-    photo:"photos/context/canal_road_01.jpg", thumb:"photos/context/canal_road_01-thumb.jpg", credit:"Om Dorkar", license:"CC-BY-SA 4.0" }
+    photo:"photos/context/canal_road_01.jpg", thumb:"photos/context/canal_road_01-thumb.jpg", credit:"Om Dorkar", license:"CC-BY-SA 4.0" },
+  { id:"c2", lat:22.3456718, lng:73.1647309, cat:"", sev:"", src:"context", ts:0, placed:"manual",
+    desc:"Reported by Om: no footpath or side road at all on this wet road; the asphalt edge is broken and electricity poles stand at the roadside. The photo was taken from a car and does not show the footpath problem clearly.",
+    photo:"photos/context/road_no_footpath_poles_01.jpg", thumb:"photos/context/road_no_footpath_poles_01-thumb.jpg", credit:"Om Dorkar", license:"CC-BY-SA 4.0" },
+  { id:"c3", lat:22.3329866, lng:73.1680683, cat:"", sev:"", src:"context", ts:0, placed:"manual",
+    desc:"A median (the strip between lanes) with mismatched paving: slabs and bricks of different sizes and heights, seen from above. It is a median, not a footpath, so it is not counted as a barrier.",
+    photo:"photos/context/median_mismatched_paving_01.jpg", thumb:"photos/context/median_mismatched_paving_01-thumb.jpg", credit:"Om Dorkar", license:"CC-BY-SA 4.0" },
+  { id:"c4", lat:22.3399156, lng:73.216379, cat:"", sev:"", src:"context", ts:0, placed:"manual",
+    desc:"Reported by Om: side roads near Harni Airport Road have no ramps. The photo shows wet ground beside the road in the monsoon, not the missing ramps, so this is a report, not photographic evidence.",
+    photo:"photos/context/harni_side_road_01.jpg", thumb:"photos/context/harni_side_road_01-thumb.jpg", credit:"Om Dorkar", license:"CC-BY-SA 4.0" },
+  { id:"c5", lat:22.333812, lng:73.181688, cat:"", sev:"", src:"context", ts:0, placed:"manual",
+    desc:"Reported by Om: a very uneven path with no flat surface in the monsoon, with muddy ground, standing water and a food stall taking up part of the width. The photo is not shown because it has people's faces in it.",
+    photo:"", thumb:"", credit:"Om Dorkar", license:"CC-BY-SA 4.0" }
 ];
 const allRecords = () => [...SURVEY, ...community, ...userReports, ...SAMPLE, ...CONTEXT];
 
@@ -382,16 +395,57 @@ const BASES = {
 let base = "street"; BASES.street.addTo(map);
 const reportLayer = L.layerGroup().addTo(map);
 const mlyLayer = L.layerGroup().addTo(map);
+// AI-suggested barriers: a model (Claude) looked at Mapillary street photos and flagged possible barriers.
+// Nobody has checked them on the ground. They are NOT survey findings and are not counted anywhere.
+const AI_SUGGESTED = [
+  { id:"1350591156368034",  lat:22.250102, lng:73.219607, cat:"obstacle", sev:"low", conf:"low", note:"An auto-rickshaw is parked on the raised paved strip beside the kerb." },
+  { id:"1417097023346174",  lat:22.249648, lng:73.219252, cat:"obstacle", sev:"low", conf:"low", note:"Scooters and people use the raised paved strip, which looks narrow and cluttered." },
+  { id:"25624681363839756", lat:22.249718, lng:73.219301, cat:"obstacle", sev:"low", conf:"low", note:"A heap of earth and rubbish spills onto the raised roadside strip." },
+  { id:"1207180784713779",  lat:22.250343, lng:73.219794, cat:"uneven",   sev:"med", conf:"low", note:"Raised brick-paved strip with a broken, lifted edge next to the carriageway." },
+  { id:"1441466834009943",  lat:22.250419, lng:73.219846, cat:"uneven",   sev:"med", conf:"low", note:"Paved strip with a broken edge and loose bricks." },
+  { id:"33310089888604672", lat:22.250495, lng:73.219894, cat:"uneven",   sev:"med", conf:"low", note:"Paving bricks are broken and scattered along the strip." },
+  { id:"826289893569849",   lat:22.250630, lng:73.219970, cat:"uneven",   sev:"med", conf:"low", note:"Loose bricks and broken paving along the strip." },
+  { id:"1824670314698427",  lat:22.250690, lng:73.220010, cat:"uneven",   sev:"low", conf:"low", note:"Broken kerb edge with debris on the strip." }
+];
+const aiLayer = L.layerGroup();   // off by default
+function aiIcon(r){
+  return L.divIcon({ className:"", iconSize:[24,24], iconAnchor:[12,12],
+    html:'<div class="pin" style="--c:#7b3fbf;width:24px;height:24px;border-radius:4px;transform:rotate(45deg);border-style:dashed"><span style="transform:rotate(-45deg);display:grid;place-items:center">'+icon(r.cat)+'</span></div>' });
+}
+AI_SUGGESTED.forEach(r => L.marker([r.lat,r.lng], { icon:aiIcon(r), title:"AI-suggested (unverified): "+CATS[r.cat].label, keyboard:true })
+  .on("click", () => showAi(r)).addTo(aiLayer));
+async function showAi(r){
+  const cat = CATS[r.cat], sev = SEV[r.sev];
+  openPanel(
+    '<div id="aiPhoto" class="hero"><figcaption>Loading the Mapillary photo…</figcaption></div>'+
+    '<h2>'+cat.label+'</h2><span class="chip ai">AI-suggested &middot; unverified</span>'+
+    '<dl class="rows">'+
+      '<div><dt>Severity guess</dt><dd><span class="sev" style="background:'+sev.hex+'"></span><b>'+sev.label+'</b> &middot; low confidence</dd></div>'+
+      '<div><dt>What the AI saw</dt><dd>'+esc(r.note)+'</dd></div>'+
+      '<div><dt>Location</dt><dd>'+coords(r.lat,r.lng)+' <small style="color:var(--muted)">(where the photo was taken)</small></dd></div>'+
+    '</dl>'+
+    '<div class="callout"><b>Not verified</b>A computer program looked at this street-level photo and guessed there may be a barrier. Nobody has checked it on the ground. It is not a survey finding and is not counted in the totals. The photo is a side-on view from a moving car, so it can easily be wrong.</div>'+
+    '<div class="actions"><button class="btn" data-act="zoomTo">Zoom here</button>'+
+    '<a class="btn" href="'+mlyLink(r.id)+'" target="_blank" rel="noopener">Open in Mapillary</a></div>',
+    { kind:"feature", r:{ ...r, lat:r.lat, lng:r.lng } });
+  try {
+    const res = await fetch("https://graph.mapillary.com/"+r.id+"?fields=thumb_1024_url,captured_at,creator&access_token="+encodeURIComponent(MAPILLARY_TOKEN || lsGet("vam_mly","")));
+    const j = await res.json();
+    const el = $("aiPhoto");
+    if (el && j.thumb_1024_url) el.innerHTML = '<a href="'+mlyLink(r.id)+'" target="_blank" rel="noopener"><img src="'+safeUrl(j.thumb_1024_url)+'" alt="Mapillary street photo" loading="lazy"></a><figcaption>&copy; '+esc((j.creator && j.creator.username) || "Mapillary contributor")+(j.captured_at ? ' &middot; '+fmtDate(j.captured_at) : '')+' via Mapillary &middot; CC-BY-SA 4.0</figcaption>';
+    else if (el) el.innerHTML = '<figcaption>Photo not available. Use "Open in Mapillary".</figcaption>';
+  } catch(e) { const el = $("aiPhoto"); if (el) el.innerHTML = '<figcaption>Could not load the photo. Use "Open in Mapillary".</figcaption>'; }
+}
 const gapLayer = L.layerGroup();   // off by default; switched on from Layers
 const knownLayer = L.layerGroup().addTo(map);
-const studyLayer = L.rectangle(STUDY, { color:"#0b6e4f", weight:2, dashArray:"6 6", fill:false, interactive:false }).addTo(map);
+const studyLayer = L.rectangle(CITY, { color:"#0b6e4f", weight:2, dashArray:"6 6", fill:false, interactive:false }).addTo(map);
 
 const state = {
   // Sample pins only show while there is no real survey data; they can still be switched on under Layers.
   src: { survey:true, community:true, user:true, sample: SURVEY.length === 0, context:true },
   types: new Set(Object.keys(CATS)),
   sevs: new Set(Object.keys(SEV)),
-  overlays: { mly:true, gaps:false, known:true, study:true },
+  overlays: { mly:true, gaps:false, known:true, study:true, ai:false },
   mlyCount: 0, mlyStatus: "", gapCount: 0, knownCount: 0, ovStatus: ""
 };
 
@@ -507,6 +561,9 @@ function showLayers(keepScroll){
     (tokenNeeded ? '<div class="q" style="margin-top:8px"><label for="mlyToken"><b>Mapillary client token</b></label><p class="why" style="margin:4px 0 8px">Free from mapillary.com/dashboard/developers. Saved in this browser.</p><input type="text" id="mlyToken" placeholder="MLY|…" autocomplete="off" value="'+esc(lsGet("vam_mly",""))+'"></div>' : '')+
     '<div class="actions" style="margin-top:8px"><button class="btn" data-act="loadMly">Load photos in view</button></div>'+
     (state.mlyStatus ? '<p class="status">'+esc(state.mlyStatus)+'</p>' : '')+
+    '<h3>AI suggestions</h3>'+
+    toggleRow("ov","ai",'<div class="pin" style="--c:#7b3fbf;width:20px;height:20px;border-radius:4px;border-style:dashed">'+icon("uneven")+'</div>',"AI-suggested (unverified)",AI_SUGGESTED.length,state.overlays.ai)+
+    '<p class="status">Possible barriers a computer program spotted in Mapillary street photos. Not checked on the ground, not counted as findings.</p>'+
     '<h3>OpenStreetMap</h3>'+
     toggleRow("ov","known",'<span class="swatch"><svg width="22" height="14"><circle cx="5" cy="7" r="4" fill="#2e7d32" stroke="#fff" stroke-width="1.5"/><circle cx="11" cy="7" r="4" fill="#e08600" stroke="#fff" stroke-width="1.5"/><circle cx="17" cy="7" r="4" fill="#c62828" stroke="#fff" stroke-width="1.5"/></svg></span>',"Already known in OSM",state.knownCount,state.overlays.known)+
     '<p class="status">Places and kerbs where OSM mappers recorded wheelchair access, kerb height or tactile paving. Green accessible, orange limited, red not accessible.</p>'+
@@ -515,7 +572,7 @@ function showLayers(keepScroll){
     (osmLoaded ? '' : '<div class="actions" style="margin-top:8px"><button class="btn" data-act="checkOsm">Load OpenStreetMap data</button></div>')+
     (state.ovStatus ? '<p class="status">'+esc(state.ovStatus)+'</p>' : '')+
     '<h3>Other</h3>'+
-    toggleRow("ov","study",'<span class="swatch"><svg width="22" height="16"><rect x="1" y="1" width="20" height="14" fill="none" stroke="#0b6e4f" stroke-width="2" stroke-dasharray="4 3"/></svg></span>',"Core area outline (OSM checks)","",state.overlays.study)+
+    toggleRow("ov","study",'<span class="swatch"><svg width="22" height="16"><rect x="1" y="1" width="20" height="14" fill="none" stroke="#0b6e4f" stroke-width="2" stroke-dasharray="4 3"/></svg></span>',"Study area outline","",state.overlays.study)+
     '<div class="actions"><button class="btn" data-act="export">Export all as JSON</button>'+(userReports.length ? '<button class="btn danger" data-act="clearMine">Delete my reports</button>' : '')+'</div>',
     { kind:"layers" }, keepScroll);
 }
@@ -525,7 +582,7 @@ function toggleRow(group, key, sw, label, count, on){
 }
 function setOverlay(k, on){
   state.overlays[k] = on;
-  const lyr = { mly:mlyLayer, gaps:gapLayer, known:knownLayer, study:studyLayer }[k];
+  const lyr = { mly:mlyLayer, gaps:gapLayer, known:knownLayer, study:studyLayer, ai:aiLayer }[k];
   if (on) lyr.addTo(map); else map.removeLayer(lyr);
 }
 

@@ -6,12 +6,12 @@ Templates for the people side of the project: talking to the people who live wit
 
 ## 1. Walk-along or interview with a wheelchair user, older person or parent with a pram
 
-**Who:** 2–3 people who regularly get around the study area. Ask through family, neighbours, a local disability organisation, or a hospital or physiotherapy clinic. If a participant is under 18, ask a parent or guardian too.
+**Who:** 2–3 people who regularly get around the city. Ask through family, neighbours, a local disability organisation, or a hospital or physiotherapy clinic. If a participant is under 18, ask a parent or guardian too.
 
 **How:** a 20–30 minute walk along one surveyed street, or a sit-down chat while going through the photos together. Bring a printed copy of the street report.
 
 ### Consent (read aloud or hand over, before starting)
-> I'm Om Dorkar, a student. I'm mapping barriers on footpaths and crossings in Alkapuri, Sayaji Baug and around the railway station, so they can be reported to the city and fixed. The map is public: omdorkar.github.io/vadodara-access-map
+> I'm Om Dorkar, a student. I'm mapping barriers on footpaths and crossings in Vadodara, so they can be reported to the city and fixed. The map is public: omdorkar.github.io/vadodara-access-map
 >
 > I'd like to ask you a few questions about getting around these streets.
 > - Taking part is your choice. You can skip any question or stop at any time.
@@ -41,11 +41,11 @@ Templates for the people side of the project: talking to the people who live wit
 
 ## 2. Email to a local disability organisation
 
-> **Subject:** Footpath accessibility map for Alkapuri / Sayaji Baug: would your members review it?
+> **Subject:** Footpath accessibility map for Vadodara: would your members review it?
 >
 > Dear [name / team],
 >
-> I'm Om Dorkar, a student in Vadodara. I've surveyed footpaths and crossings in Alkapuri, Sayaji Baug and around the railway station, and documented [N] barriers with photos and exact locations, for example missing kerb ramps, blocked footpaths and open drains. The map and a printable street report are here: https://omdorkar.github.io/vadodara-access-map/
+> I'm Om Dorkar, a student in Vadodara. I've surveyed footpaths and crossings in Vadodara, and documented [N] barriers with photos and exact locations, for example missing kerb ramps, blocked footpaths and open drains. The map and a printable street report are here: https://omdorkar.github.io/vadodara-access-map/
 >
 > Could I meet one or two of your members for 30 minutes? I'd like them to tell me which barriers matter most and what I've missed. I'd also be glad to share the report with your organisation, or send it to the Vadodara Municipal Corporation jointly if you think that would help.
 >
@@ -63,11 +63,11 @@ Templates for the people side of the project: talking to the people who live wit
 > To: The Municipal Commissioner, Vadodara Municipal Corporation
 > (Copy: Ward office, [ward name / number])
 >
-> **Subject:** Accessibility barriers on footpaths and crossings in Alkapuri, Sayaji Baug and the railway station area: survey report with locations and photos
+> **Subject:** Accessibility barriers on footpaths and crossings in Vadodara: survey report with locations and photos
 >
 > Respected Sir / Madam,
 >
-> I am Om Dorkar, a student in Vadodara. Between [dates] I surveyed footpaths and crossings in Alkapuri, Sayaji Baug and the railway station area on foot. I documented **[N] barriers** that make these streets difficult or impossible to use for wheelchair users, older people and parents with prams. **[H]** of them completely block wheelchair access.
+> I am Om Dorkar, a student in Vadodara. Between [dates] I surveyed footpaths and crossings in Vadodara on foot. I documented **[N] barriers** that make these streets difficult or impossible to use for wheelchair users, older people and parents with prams. **[H]** of them completely block wheelchair access.
 >
 > The attached report lists each barrier with a photo, exact location, severity, and a suggested fix. The most urgent are:
 > 1. [B-01: type, street, one line]

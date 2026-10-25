@@ -1,13 +1,13 @@
 # Field survey photo guide
 
-This is a one-page guide for the photo walk. These photos are the project's real evidence, so they matter more than anything else on the site.
+This is a one-page guide for taking photos, whether Om takes them or a volunteer sends them in. These photos are the project's real evidence, so they matter more than anything else on the site. A photo only counts as a finding if **it shows the barrier**. If you only know a barrier is there, say so in the note and the pin is marked as a report.
 
 ## Before you go (one-time setup)
 - **OpenStreetMap account** (2 min): sign up at https://www.openstreetmap.org/user/new. After the walk, the kerbs and entrances you checked can be added to OSM under this name. Every edit is public and dated.
 - **Mapillary**: create an account at https://www.mapillary.com and install the Mapillary app. Run it during the walk (below).
 - **Turn on camera location.** iPhone: Settings → Privacy & Security → Location Services → Camera → "While Using". Android: Camera app settings → "Location tags" on.
 - Test it: take one photo, open it in Photos, swipe up. You should see a map. If there's no map, location is off.
-- Pick 2–3 streets in the study area (Alkapuri, Sayaji Baug, around the railway station). Aim for **20–30 photos**.
+- Pick 2–3 streets anywhere in Vadodara. Aim for **20–30 photos**, and photograph every kerb or crossing on them, not only the bad ones, so we can say how many were checked.
 - Go in daylight and with a friend if you can.
 
 ## What to photograph
