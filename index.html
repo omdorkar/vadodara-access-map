@@ -219,15 +219,16 @@
       <p>Broken or missing ramps, high kerbs, blocked footpaths and steps with no alternative make it hard or impossible for wheelchair users, older people and parents with prams to get around. This map records those barriers street by street, with a photo and an exact location, so anyone can check them and the city can fix them.</p>
       <h3>How to use it</h3>
       <ul>
-        <li>Tap a pin to see the photo and details. Square pins come from the field survey.</li>
+        <li>Tap a pin to see the photo and details. Square pins are Om's photos.</li>
+        <li>Small dots are the <b>AI street scan</b>: green = footpath seen, red = no footpath seen on a built-up street, purple ring = zebra crossing to check for a ramp. Tap one to see the photo and say whether the AI is right.</li>
         <li><b>Report a barrier</b>: pick the type, place the pin, answer a few short questions.</li>
         <li><b>Layers &amp; filters</b>: satellite view, street-level photos, OpenStreetMap gaps, and filters by type and severity.</li>
       </ul>
       <h3>Roadmap</h3>
       <ul>
-        <li><b>Now:</b> field survey with geotagged photos, plus crowdsourced reports.</li>
+        <li><b>Now:</b> Om's photos, an AI street scan of every Mapillary photo in the city, and people checking the AI.</li>
         <li><b>Next:</b> shared storage so everyone sees each other's reports. Verified kerb and tactile-paving data added to OpenStreetMap, where every map app can use it.</li>
-        <li><b>Later:</b> a small ramp/obstacle detector, trained only on photos whose licence allows it.</li>
+        <li><b>Later:</b> more street photos (anyone can add them with the free Mapillary app), so the AI scan covers footpaths, not just main roads. Then a ramp/obstacle detector trained on the photos people have checked.</li>
       </ul>
       <p class="muted" style="color:var(--muted)">Built by Om Dorkar. Open source on <a href="https://github.com/omdorkar/vadodara-access-map" target="_blank" rel="noopener">GitHub</a>.</p>
       <p id="osmContrib" hidden></p>
@@ -241,11 +242,14 @@
         <li><a href="https://deshgujarat.com/2022/11/03/motorised-stair-climber-wheelchair-facility-at-vadodara-station/" target="_blank" rel="noopener"><b>Motorised stair-climber wheelchairs launched at Vadodara station</b></a>, <i>DeshGujarat</i>, 3 November 2022. This is a welcome step, but it was needed because lifts and escalators could not be provided on the other platforms.</li>
       </ul>
       <p>Those reports are years old. This project asks: <b>what is it like today, street by street?</b></p>
-      <p>The method is inspired by the University of Alberta's <a href="https://www.ualberta.ca/en/folio/2025/04/overcoming-obstacles.html" target="_blank" rel="noopener">Atlas / Click&amp;Push</a> work, which combines crowdsourced barrier reports with camera and GPS data. The question design follows OpenStreetMap accessibility tagging, as used by <a href="https://mapcomplete.org/onwheels" target="_blank" rel="noopener">MapComplete OnWheels</a>. This is a small, student-led project for one area of Vadodara.</p>
+      <p>The method is inspired by the University of Alberta's <a href="https://www.ualberta.ca/en/folio/2025/04/overcoming-obstacles.html" target="_blank" rel="noopener">Atlas / Click&amp;Push</a> work, which combines crowdsourced barrier reports with camera and GPS data and is developing deep learning to detect barriers. Here the AI step uses Mapillary's computer vision on street photos, and people check its answers. The question design follows OpenStreetMap accessibility tagging, as used by <a href="https://mapcomplete.org/onwheels" target="_blank" rel="noopener">MapComplete OnWheels</a>. This is a small, student-led project for Vadodara.</p>
     </section>
     <section class="tab-panel" id="t-method" hidden>
       <ul>
-        <li><b>Field survey:</b> photos taken on foot from public footpaths with phone GPS on. Location comes from the photo. Type, severity and notes are recorded on site.</li>
+        <li><b>Om's photos:</b> taken in Vadodara and placed by hand from the location Om gave. Type, severity and notes are Om's. Om could not do a systematic walk, so there is no count of places checked.</li>
+        <li><b>AI street scan:</b> Mapillary runs semantic segmentation on every uploaded photo (it labels road, footpath, kerb, building, crossing and more). <code>tools/ai_scan.js</code> asks of each daytime photo: is there a road, and is a footpath visible? Built-up streets with none are red. Night photos and photos with no road are not judged. Anyone can re-run it as new photos are added.</li>
+        <li><b>Checking the AI:</b> in a spot check of 12 red dots, 8 clearly had no footpath and 4 were unclear. The AI almost never detects kerb ramps, so crossings are marked "check for a ramp", not "no ramp".</li>
+        <li><b>AI-suggested barriers</b> (purple diamonds): a few photos where a model (Claude) looked at the image and suggested a specific barrier. Unverified.</li>
         <li><b>Severity:</b> High = a wheelchair user cannot pass. Medium = possible but difficult or unsafe. Low = inconvenient.</li>
         <li><b>OpenStreetMap-ready answers:</b> where a standard tag exists (<span class="tag">kerb</span>, <span class="tag">tactile_paving</span>, <span class="tag">wheelchair</span>, <span class="tag">lit</span>), the answer is stored as that tag. Verified points can then be added to OpenStreetMap.</li>
         <li><b>Street-level photos</b> come from Mapillary. They are context until someone marks a barrier in one.</li>
@@ -258,14 +262,15 @@
         <li>Reports you add are stored only in your browser until exported. There is no shared database yet.</li>
         <li>Very few footways in this area are mapped in OpenStreetMap (26 footway ways when checked, none with accessibility tags).</li>
         <li>Satellite imagery cannot show the condition of a ramp. It is context only.</li>
-        <li>Phone GPS can be off by 5–15 m. The survey covers a few streets, not the whole city.</li>
+        <li>Phone GPS can be off by 5–15 m. Om's photos cover a few places, not the whole city.</li>
+        <li>The AI street scan only sees where Mapillary photos exist: mostly main roads and highways, taken from vehicles, many from 2014–15. A red dot means no footpath was seen in that photo, not that none exists.</li>
       </ul>
     </section>
     <section class="tab-panel" id="t-sources" hidden>
       <ul>
         <li>Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL. The OSM gap layer is derived from it and stays ODbL.</li>
         <li>Satellite imagery &copy; Esri, Maxar, Earthstar Geographics and the GIS User Community. Display only.</li>
-        <li>Street-level photos via <a href="https://www.mapillary.com" target="_blank" rel="noopener">Mapillary</a>, CC-BY-SA 4.0, credited to each author.</li>
+        <li>Street-level photos via <a href="https://www.mapillary.com" target="_blank" rel="noopener">Mapillary</a>, CC-BY-SA 4.0, credited to each author. The AI street scan is derived from Mapillary's detections.</li>
         <li>Field survey photos and data: CC-BY-SA 4.0, credited on each pin. Code: MIT.</li>
         <li>No Google Maps, Earth or Street View imagery is used.</li>
         <li>Source code: <a href="https://github.com/omdorkar/vadodara-access-map" target="_blank" rel="noopener">github.com/omdorkar/vadodara-access-map</a></li>
@@ -279,6 +284,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="data/vocab.js"></script>
 <script src="data/survey.js"></script>
+<script src="data/ai_scan.js"></script>
 <script>
 // ---------- Settings: each feature switches on when its value is filled in ----------
 // Mapillary client token (starts with MLY|). Designed for public browser use. Can also be entered under Layers & filters.
@@ -382,7 +388,7 @@ const BASES = {
 };
 let base = "street"; BASES.street.addTo(map);
 const reportLayer = L.layerGroup().addTo(map);
-const mlyLayer = L.layerGroup().addTo(map);
+const mlyLayer = L.layerGroup();   // off by default; the AI street scan shows the same photos
 // AI-suggested barriers: a model (Claude) looked at Mapillary street photos and flagged possible barriers.
 // Nobody has checked them on the ground. They are NOT survey findings and are not counted anywhere.
 const AI_SUGGESTED = [
@@ -396,6 +402,63 @@ const AI_SUGGESTED = [
   { id:"1824670314698427",  lat:22.250690, lng:73.220010, cat:"uneven",   sev:"low", conf:"low", note:"Broken kerb edge with debris on the strip." }
 ];
 const aiLayer = L.layerGroup();   // off by default
+
+// ---------- AI street scan (data/ai_scan.js, made by tools/ai_scan.js from Mapillary's computer vision) ----------
+const SCAN = (window.AI_SCAN && Array.isArray(window.AI_SCAN.rows) ? window.AI_SCAN.rows : [])
+  .map(r => ({ id:String(r[0]), lat:r[1], lng:r[2], ts:r[3], v:r[4], flags:r[5] || "" }));
+const SCAN_STYLE = {
+  F:{ hex:"#2e7d32", label:"Footpath detected" },
+  N:{ hex:"#c62828", label:"No footpath detected (built-up street)" },
+  O:{ hex:"#9aa3ab", label:"Open road or highway, no footpath detected" }
+};
+const scanLayer = L.layerGroup().addTo(map);   // on by default
+const scanCount = k => SCAN.filter(r => r.v === k).length;
+const scanCross = SCAN.filter(r => r.flags.indexOf("c") >= 0);
+SCAN.filter(r => SCAN_STYLE[r.v]).forEach(r =>
+  L.circleMarker([r.lat,r.lng], { radius:5, color:"#fff", weight:1.5, fillColor:SCAN_STYLE[r.v].hex, fillOpacity:.9, bubblingMouseEvents:false })
+    .on("click", () => showScan(r)).addTo(scanLayer));
+scanCross.forEach(r =>
+  L.circleMarker([r.lat,r.lng], { radius:9, color:"#7b3fbf", weight:3, fill:false, bubblingMouseEvents:false })
+    .on("click", () => showScan(r)).addTo(scanLayer));
+
+// People checking the AI. Saved in this browser and included in Export.
+function loadVotes(){ try { return JSON.parse(lsGet("vam_ai_votes","{}")) || {}; } catch(e){ return {}; } }
+let aiVotes = loadVotes();
+function voteButtons(id){
+  const v = aiVotes[id];
+  return '<h3>Is the AI right?</h3><p class="note" style="margin-top:0">Look at the photo. Your answer is saved in this browser and included when you export.</p>'+
+    '<div class="actions"><button class="btn'+(v==="yes"?" primary":"")+'" data-act="aiVote" data-id="'+esc(id)+'" data-v="yes">Looks right</button>'+
+    '<button class="btn'+(v==="no"?" primary":"")+'" data-act="aiVote" data-id="'+esc(id)+'" data-v="no">Looks wrong</button>'+
+    '<button class="btn'+(v==="unsure"?" primary":"")+'" data-act="aiVote" data-id="'+esc(id)+'" data-v="unsure">Can\'t tell</button></div>';
+}
+async function loadMlyPhoto(id, elId){
+  try {
+    const res = await fetch("https://graph.mapillary.com/"+encodeURIComponent(id)+"?fields=thumb_1024_url,captured_at,creator&access_token="+encodeURIComponent(MAPILLARY_TOKEN || lsGet("vam_mly","")));
+    const j = await res.json(); const el = $(elId);
+    if (el && j.thumb_1024_url) el.innerHTML = '<a href="'+mlyLink(id)+'" target="_blank" rel="noopener"><img src="'+safeUrl(j.thumb_1024_url)+'" alt="Mapillary street photo" loading="lazy"></a><figcaption>&copy; '+esc((j.creator && j.creator.username) || "Mapillary contributor")+(j.captured_at ? ' &middot; '+fmtDate(j.captured_at) : '')+' via Mapillary &middot; CC-BY-SA 4.0</figcaption>';
+    else if (el) el.innerHTML = '<figcaption>Photo not available. Use "Open in Mapillary".</figcaption>';
+  } catch(e) { const el = $(elId); if (el) el.innerHTML = '<figcaption>Could not load the photo. Use "Open in Mapillary".</figcaption>'; }
+}
+function showScan(r){
+  const st = SCAN_STYLE[r.v];
+  const found = [
+    ['Footpath', r.v === "F" ? "Detected" : "Not detected"],
+    r.flags.indexOf("c") >= 0 ? ['Zebra crossing', 'Detected. Check whether there is a kerb ramp at each end (the AI rarely detects ramps, so it cannot tell).'] : null,
+    r.flags.indexOf("k") >= 0 ? ['Kerb cut', 'Detected'] : null,
+    r.flags.indexOf("p") >= 0 ? ['Pothole', 'Detected'] : null,
+    ['Photo taken', fmtDate(r.ts)],
+    ['Location', coords(r.lat,r.lng)]
+  ].filter(Boolean);
+  openPanel(
+    '<div id="scanPhoto" class="hero"><figcaption>Loading the Mapillary photo…</figcaption></div>'+
+    '<h2>'+(st ? st.label : "Not judged")+'</h2><span class="chip ai">AI street scan &middot; unverified</span>'+
+    '<dl class="rows">'+found.map(([k,v]) => '<div><dt>'+k+'</dt><dd>'+esc(v)+'</dd></div>').join("")+'</dl>'+
+    '<div class="callout"><b>How this was made</b>Mapillary\'s computer vision labelled every part of this photo (road, footpath, kerb, building…). A simple rule then asks: is there a road, and is any footpath visible? It is a machine guess from one photo taken from a vehicle. A footpath hidden behind parked cars or out of frame will be missed.</div>'+
+    voteButtons(r.id)+
+    '<div class="actions"><button class="btn" data-act="zoomTo">Zoom here</button><a class="btn" href="'+mlyLink(r.id)+'" target="_blank" rel="noopener">Open in Mapillary</a></div>',
+    { kind:"feature", r });
+  loadMlyPhoto(r.id, "scanPhoto");
+}
 function aiIcon(r){
   return L.divIcon({ className:"", iconSize:[24,24], iconAnchor:[12,12],
     html:'<div class="pin" style="--c:#7b3fbf;width:24px;height:24px;border-radius:4px;transform:rotate(45deg);border-style:dashed"><span style="transform:rotate(-45deg);display:grid;place-items:center">'+icon(r.cat)+'</span></div>' });
@@ -413,6 +476,7 @@ async function showAi(r){
       '<div><dt>Location</dt><dd>'+coords(r.lat,r.lng)+' <small style="color:var(--muted)">(where the photo was taken)</small></dd></div>'+
     '</dl>'+
     '<div class="callout"><b>Not verified</b>A computer program looked at this street-level photo and guessed there may be a barrier. Nobody has checked it on the ground. It is not a survey finding and is not counted in the totals. The photo is a side-on view from a moving car, so it can easily be wrong.</div>'+
+    voteButtons(r.id)+
     '<div class="actions"><button class="btn" data-act="zoomTo">Zoom here</button>'+
     '<a class="btn" href="'+mlyLink(r.id)+'" target="_blank" rel="noopener">Open in Mapillary</a></div>',
     { kind:"feature", r:{ ...r, lat:r.lat, lng:r.lng } });
@@ -433,7 +497,7 @@ const state = {
   src: { survey:true, community:true, user:true, sample: SURVEY.length === 0, context:true },
   types: new Set(Object.keys(CATS)),
   sevs: new Set(Object.keys(SEV)),
-  overlays: { mly:true, gaps:false, known:true, study:true, ai:false },
+  overlays: { mly:false, gaps:false, known:true, study:true, ai:false, scan:true },
   mlyCount: 0, mlyStatus: "", gapCount: 0, knownCount: 0, ovStatus: ""
 };
 
@@ -508,7 +572,7 @@ function showFeature(r){
     ? '<div class="callout"><b>Sent for review</b>It will appear for everyone once approved. This copy is kept in your browser.</div>'
     : r.src === "user"
     ? '<div class="callout"><b>Saved in this browser only</b>Other people can\'t see it yet. Use Export under Layers &amp; filters to share it.</div>'
-    : '<div class="callout"><b>Verified on the ground</b>Photographed on site during the field survey.'+(tags.length ? ' This point can be added to OpenStreetMap.' : '')+'</div>';
+    : '<div class="callout"><b>Photographed by Om</b>Taken on site by the project. Type and severity are Om\'s judgement; check the note for what the photo does and does not show.'+(tags.length ? ' This point can be added to OpenStreetMap.' : '')+'</div>';
   openPanel(
     photo +
     '<h2>'+(cat ? cat.label : "Barrier (type not recorded)")+'</h2>'+
@@ -535,7 +599,7 @@ function showLayers(keepScroll){
       '<button class="base" data-act="base" data-base="satellite" aria-pressed="'+(base==="satellite")+'"><span style="background:linear-gradient(135deg,#3d4a35 0 35%,#6b6b5a 35% 42%,#4f5d42 42% 68%,#8a8574 68% 73%,#2f3a2a 73%)"></span><div>Satellite</div></button>'+
     '</div>'+
     '<h3>Barrier reports</h3>'+
-    toggleRow("src","survey",'<div class="pin survey" style="--c:#c62828;width:22px;height:22px">'+icon("missing_ramp")+'</div>',"Field survey (verified)",cnt("survey"),state.src.survey)+
+    toggleRow("src","survey",'<div class="pin survey" style="--c:#c62828;width:22px;height:22px">'+icon("missing_ramp")+'</div>',"Field survey (Om's photos)",cnt("survey"),state.src.survey)+
     toggleRow("src","user",'<div class="pin user" style="--c:#c62828;width:22px;height:22px">'+icon("obstacle")+'</div>',"Your reports",cnt("user"),state.src.user)+
     (supaOn ? toggleRow("src","community",'<div class="pin community" style="--c:#c62828;width:22px;height:22px">'+icon("broken_ramp")+'</div>',"Community reports (reviewed)",cnt("community"),state.src.community) : '')+
     toggleRow("src","context",'<div class="pin context" style="--c:#6b7680;width:22px;height:22px">'+icon("unknown")+'</div>',"Documentation only (not counted)",cnt("context"),state.src.context)+
@@ -550,6 +614,8 @@ function showLayers(keepScroll){
     '<div class="actions" style="margin-top:8px"><button class="btn" data-act="loadMly">Load photos in view</button></div>'+
     (state.mlyStatus ? '<p class="status">'+esc(state.mlyStatus)+'</p>' : '')+
     '<h3>AI suggestions</h3>'+
+    toggleRow("ov","scan",'<span class="swatch"><svg width="22" height="14"><circle cx="5" cy="7" r="4" fill="#2e7d32" stroke="#fff" stroke-width="1.5"/><circle cx="11" cy="7" r="4" fill="#c62828" stroke="#fff" stroke-width="1.5"/><circle cx="17" cy="7" r="4" fill="none" stroke="#7b3fbf" stroke-width="2"/></svg></span>',"AI street scan",SCAN.filter(r => SCAN_STYLE[r.v]).length,state.overlays.scan)+
+    '<p class="status">Mapillary\'s computer vision checked '+SCAN.length+' street photos. On built-up streets in daylight, a footpath was detected in '+scanCount("F")+' of '+(scanCount("F")+scanCount("N"))+' ('+Math.round(100*scanCount("F")/Math.max(1,(scanCount("F")+scanCount("N"))))+'%). Green: footpath seen. Red: none seen. Grey: open road. Purple ring: zebra crossing to check for a ramp. Machine guesses, unverified.</p>'+
     toggleRow("ov","ai",'<div class="pin" style="--c:#7b3fbf;width:20px;height:20px;border-radius:4px;border-style:dashed">'+icon("uneven")+'</div>',"AI-suggested (unverified)",AI_SUGGESTED.length,state.overlays.ai)+
     '<p class="status">Possible barriers a computer program spotted in Mapillary street photos. Not checked on the ground, not counted as findings.</p>'+
     '<h3>OpenStreetMap</h3>'+
@@ -570,7 +636,7 @@ function toggleRow(group, key, sw, label, count, on){
 }
 function setOverlay(k, on){
   state.overlays[k] = on;
-  const lyr = { mly:mlyLayer, gaps:gapLayer, known:knownLayer, study:studyLayer, ai:aiLayer }[k];
+  const lyr = { mly:mlyLayer, gaps:gapLayer, known:knownLayer, study:studyLayer, ai:aiLayer, scan:scanLayer }[k];
   if (on) lyr.addTo(map); else map.removeLayer(lyr);
 }
 
@@ -606,7 +672,7 @@ async function loadMapillary(area){
       L.circleMarker([lat,lng], { radius:6, color:"#fff", weight:2, fillColor:"#05a357", fillOpacity:1, bubblingMouseEvents:false })
         .on("click", () => showMly(p)).addTo(mlyLayer);
     });
-    state.mlyCount = imgs.length; setOverlay("mly", true);
+    state.mlyCount = imgs.length; setOverlay("mly", area ? state.overlays.mly : true);
     done(imgs.length ? imgs.length+" street photos "+(area ? "across Vadodara" : "in view")+". Tap a green dot to look, then mark any barrier you can see."
                      : "No Mapillary photos here yet. Try another street, or add photos with the Mapillary app.");
   } catch(err) { done("Could not load Mapillary photos: "+err.message); }
@@ -861,10 +927,18 @@ const ACTIONS = {
   type: d => { state.types.has(d.k) ? state.types.delete(d.k) : state.types.add(d.k); render(); showLayers(true); },
   sev: d => { state.sevs.has(d.k) ? state.sevs.delete(d.k) : state.sevs.add(d.k); render(); showLayers(true); },
   loadMly: () => loadMapillary(),
+  aiVote: (d, el) => {
+    aiVotes[d.id] = aiVotes[d.id] === d.v ? undefined : d.v;
+    if (!aiVotes[d.id]) delete aiVotes[d.id];
+    lsSet("vam_ai_votes", JSON.stringify(aiVotes));
+    el.parentNode.querySelectorAll("[data-act=aiVote]").forEach(b => b.classList.toggle("primary", aiVotes[d.id] === b.dataset.v));
+    toast(aiVotes[d.id] ? "Thanks. Saved in this browser." : "Answer cleared.");
+  },
   checkOsm: () => checkOsm(false),
   export: () => {
     const out = allRecords().map(({photo,id,...r}) => ({ ...r, ...(r.src==="survey" ? {photo} : {}), source: SRC[r.src] }));
-    const blob = new Blob([JSON.stringify({ exported:new Date().toISOString(), license:"CC-BY-SA 4.0", reports:out }, null, 2)], { type:"application/json" });
+    const ai_checks = Object.entries(aiVotes).map(([mapillary_id, answer]) => ({ mapillary_id, answer }));
+    const blob = new Blob([JSON.stringify({ exported:new Date().toISOString(), license:"CC-BY-SA 4.0", reports:out, ai_checks }, null, 2)], { type:"application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "vadodara-access-reports.json"; a.click();
   },
   clearMine: () => { if (confirm("Delete all reports you added in this browser?")) { userReports = []; store.save(userReports); render(); showLayers(true); } },
@@ -927,7 +1001,7 @@ function showWelcome(){
     '<h2>Welcome</h2>'+
     '<p>This map records barriers that make it hard to get around Vadodara and its outskirts in a wheelchair, with a pram, or on foot: broken ramps, high kerbs, blocked footpaths, missing tactile paving and steps with no alternative.</p>'+
     (SURVEY.length
-      ? '<div class="callout"><b>'+SURVEY.length+' barriers surveyed on foot</b>Square pins are from the field survey, each with a photo taken on site.</div>'
+      ? '<div class="callout"><b>'+SURVEY.length+' barriers photographed by Om</b>Square pins. Small coloured dots are an <b>AI street scan</b> of '+SCAN.length+' street photos: green where a footpath was seen, red where none was. Tap any dot to check the AI.</div>'
       : '<div class="callout"><b>Early stage</b>The field survey is under way. Until it\'s done, faded dashed pins are <b>sample data</b>, not real findings.</div>')+
     '<div class="actions"><button class="btn primary" data-act="close">Explore the map</button><button class="btn" data-act="welcomeAdd">Report a barrier</button><button class="btn" data-act="welcomeAbout">Why this project?</button></div>',
     { kind:"welcome" });

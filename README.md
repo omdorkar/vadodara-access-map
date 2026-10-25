@@ -17,7 +17,20 @@ The method is inspired by the University of Alberta's [Atlas / Click&Push](https
 
 **Live map: https://omdorkar.github.io/vadodara-access-map/** · Built by Om Dorkar · OpenStreetMap: [Om Dorkar](https://www.openstreetmap.org/user/Om%20Dorkar)
 
+## How the AI works
+Like the University of Alberta project, this map pairs people with machine vision:
+
+1. **Photos.** Street-level photos from Mapillary (anyone can add them with the free app) plus Om's own photos.
+2. **Machine vision.** Mapillary runs semantic segmentation on every photo, labelling road, footpath, kerb, crossing, building and more.
+3. **A simple, checkable rule.** [tools/ai_scan.js](tools/ai_scan.js) asks of each daytime photo: is there a road, and is a footpath visible? It writes [data/ai_scan.js](data/ai_scan.js). Re-run it any time to pick up new photos:
+   `osascript -l JavaScript tools/ai_scan.js "$PWD"`
+4. **People check the AI.** Every dot has *Looks right / Looks wrong / Can't tell* buttons. Answers are exported with the reports.
+5. **Confirmed facts go to OpenStreetMap**, where every map app can use them.
+
+First run (25 Oct 2026): 721 photos; 288 judged as built-up streets in daylight; a footpath was detected in 142 (49%) and not in 146. 13 zebra crossings were found. In a spot check of 12 "no footpath" dots, 8 clearly had none and 4 were unclear. The model almost never detects kerb ramps, so crossings are flagged to check, not counted as barriers. Coverage is mostly main roads photographed from vehicles.
+
 ## What's on the map
+- **AI street scan** (small dots, on by default): green = footpath seen, red = no footpath seen on a built-up street, grey = open road, purple ring = zebra crossing to check for a ramp.
 - **Field survey pins** (square): Om's own photos, each credited. A few show the setting but not the barrier itself, and their notes say so. Tap one for the photo, severity, details and location.
 - **Your reports** (ringed): reports a visitor makes, stored in their own browser for now (exportable as JSON).
 - **Documentation only** (grey, dotted): photos that show no footpath barrier (Canal Road) or were taken far away (Pavagadh Hill). Not counted.

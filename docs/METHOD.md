@@ -10,6 +10,7 @@ A remote accessibility audit of Vadodara and its outskirts, with a small number 
 |---|---|---|
 | **Field survey** (square pins) | Om's own photos, each credited | Eleven records. Type and severity are Om's judgement. In four of them the photo shows the setting but not the barrier itself, and the note says so. Kerb heights were not measured. |
 | **Documentation only** (grey, dotted) | Photos that do not show a footpath barrier (Canal Road) or were taken far from the city (Pavagadh Hill). | Context only. Not counted. |
+| **AI street scan** (small dots) | Mapillary's own computer vision on 721 street photos, plus a simple rule (tools/ai_scan.js) | Machine guesses. In a spot check of 12 "no footpath" dots, 8 were clearly right and 4 unclear. A footpath hidden behind parked cars is missed. Kerb ramps are almost never detected. |
 | **AI-suggested (unverified)** (purple, off by default) | Mapillary street photos that a model (Claude) looked at and flagged | Low. Nobody has checked these on the ground. The photos are side-on views from a moving car. |
 | **Mapillary photos** (green dots) | 721 street-level images across the city, mostly highways | Real imagery, CC-BY-SA, but mostly not footpaths. |
 | **Already known in OSM / possible gaps** | OpenStreetMap tags | Other people's data. A "gap" means a missing tag, not a confirmed barrier. |
@@ -22,6 +23,9 @@ A remote accessibility audit of Vadodara and its outskirts, with a small number 
 
 ## How the AI suggestions were made
 A model looked through contact sheets of the Mapillary photos (about 280 of 721) and picked a few that seemed to show a broken or blocked roadside strip. The choices were not tested against any labelled set, so they can be wrong. They are shown to be checked, not trusted.
+
+## How the AI street scan works
+For every Mapillary photo in the city box, the tool downloads Mapillary's detection labels. A photo taken in daylight that contains a road is judged: if a sidewalk or pedestrian area is labelled, it is green. If not, and there are at least three buildings and no flyover or guard rail (a sign of a highway), it is red. Other roads are grey. Night photos are skipped. The rule is in tools/ai_scan.js so anyone can read and change it.
 
 ## How to improve it
 1. People who live nearby confirm or reject each AI suggestion.
