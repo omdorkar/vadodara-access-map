@@ -27,7 +27,7 @@ Like the University of Alberta project, this map pairs people with machine visio
 4. **People check the AI.** Every dot has *Looks right / Looks wrong / Can't tell* buttons. Answers are exported with the reports.
 5. **Confirmed facts go to OpenStreetMap**, where every map app can use them.
 
-First run (25 Oct 2026): 721 photos; 288 judged as built-up streets in daylight; a footpath was detected in 142 (49%) and not in 146. 13 zebra crossings were found. In a spot check of 12 "no footpath" dots, 8 clearly had none and 4 were unclear. The model almost never detects kerb ramps, so crossings are flagged to check, not counted as barriers. Coverage is mostly main roads photographed from vehicles.
+First run (25 Oct 2026): 721 photos; 288 judged as built-up streets in daylight; a footpath was detected in 142 (49%) and not in 146. 13 zebra crossings were found. By area: Vadodara Bypass 32% (132 photos), Manjalpur 81% (90), Wadi 44% (32), Nava Bazaar 44% (27); other areas had too few photos. In a spot check of 12 "no footpath" dots, 8 clearly had none and 4 were unclear. The model almost never detects kerb ramps, so crossings are flagged to check, not counted as barriers. Coverage is mostly main roads photographed from vehicles.
 
 ## What's on the map
 - **AI street scan** (small dots, on by default): green = footpath seen, red = no footpath seen on a built-up street, grey = open road, purple ring = zebra crossing to check for a ramp.

@@ -68,6 +68,9 @@
   .chip.sample { background:#fff3cd; color:#664d03; border-color:#ffe69c; }
   .chip.user { background:#e3eefc; color:#163d73; border-color:#bcd3f5; }
   .chip.context { background:#e4e7eb; color:#2f3a45; border-color:#c9ced4; }
+  table.mini { width:100%; border-collapse:collapse; font-size:13px; margin:8px 0 0; }
+  table.mini th, table.mini td { text-align:left; padding:4px 6px; border-bottom:1px solid var(--line); }
+  table.mini th { color:var(--muted); font-weight:600; }
   .chip.ai { background:#f3e8ff; color:#5b2a86; border-color:#d9b9f5; }
   .chip.gap { background:#efe4fb; color:#4a2378; border-color:#d8c3f2; }
   .chip.mly { background:#d9f7e6; color:#0a5a33; border-color:#aee8c8; }
@@ -405,7 +408,22 @@ const aiLayer = L.layerGroup();   // off by default
 
 // ---------- AI street scan (data/ai_scan.js, made by tools/ai_scan.js from Mapillary's computer vision) ----------
 const SCAN = (window.AI_SCAN && Array.isArray(window.AI_SCAN.rows) ? window.AI_SCAN.rows : [])
-  .map(r => ({ id:String(r[0]), lat:r[1], lng:r[2], ts:r[3], v:r[4], flags:r[5] || "" }));
+  .map(r => ({ id:String(r[0]), lat:r[1], lng:r[2], ts:r[3], v:r[4], flags:r[5] || "",
+               area: r[6] >= 0 && window.AI_SCAN.areas ? String(window.AI_SCAN.areas[r[6]]).replace(/^near /,"") : "" }));
+// Per-area summary: share of built-up-street photos where a footpath was seen.
+const SCAN_AREAS = (() => {
+  const g = {};
+  SCAN.forEach(r => { if (!r.area) return; const x = g[r.area] = g[r.area] || { name:r.area, F:0, N:0, O:0, c:0 };
+    if (x[r.v] !== undefined) x[r.v]++; if (r.flags.indexOf("c") >= 0) x.c++; });
+  return Object.values(g).map(x => ({ ...x, judged:x.F+x.N, pct: x.F+x.N ? Math.round(100*x.F/(x.F+x.N)) : null }))
+    .sort((a,b) => b.judged - a.judged);
+})();
+function scanSummaryHtml(){
+  if (!SCAN_AREAS.length) return "";
+  return '<table class="mini"><thead><tr><th>Area</th><th>Photos</th><th>Footpath seen</th></tr></thead><tbody>'+
+    SCAN_AREAS.map(x => '<tr><td>'+esc(x.name)+'</td><td>'+x.judged+'</td><td>'+(x.pct === null ? '–' : (x.judged < 10 ? '<span style="color:var(--muted)">'+x.pct+'% (too few)</span>' : '<b>'+x.pct+'%</b>'))+'</td></tr>').join("")+
+    '</tbody></table><p class="status">Built-up street photos taken in daylight. Area names come from OpenStreetMap; where a street has no name, the nearest named place is used. Most photos are from a few roads, so a percentage describes those roads, not the whole area.</p>';
+}
 const SCAN_STYLE = {
   F:{ hex:"#2e7d32", label:"Footpath detected" },
   N:{ hex:"#c62828", label:"No footpath detected (built-up street)" },
@@ -616,6 +634,7 @@ function showLayers(keepScroll){
     '<h3>AI suggestions</h3>'+
     toggleRow("ov","scan",'<span class="swatch"><svg width="22" height="14"><circle cx="5" cy="7" r="4" fill="#2e7d32" stroke="#fff" stroke-width="1.5"/><circle cx="11" cy="7" r="4" fill="#c62828" stroke="#fff" stroke-width="1.5"/><circle cx="17" cy="7" r="4" fill="none" stroke="#7b3fbf" stroke-width="2"/></svg></span>',"AI street scan",SCAN.filter(r => SCAN_STYLE[r.v]).length,state.overlays.scan)+
     '<p class="status">Mapillary\'s computer vision checked '+SCAN.length+' street photos. On built-up streets in daylight, a footpath was detected in '+scanCount("F")+' of '+(scanCount("F")+scanCount("N"))+' ('+Math.round(100*scanCount("F")/Math.max(1,(scanCount("F")+scanCount("N"))))+'%). Green: footpath seen. Red: none seen. Grey: open road. Purple ring: zebra crossing to check for a ramp. Machine guesses, unverified.</p>'+
+    scanSummaryHtml()+
     toggleRow("ov","ai",'<div class="pin" style="--c:#7b3fbf;width:20px;height:20px;border-radius:4px;border-style:dashed">'+icon("uneven")+'</div>',"AI-suggested (unverified)",AI_SUGGESTED.length,state.overlays.ai)+
     '<p class="status">Possible barriers a computer program spotted in Mapillary street photos. Not checked on the ground, not counted as findings.</p>'+
     '<h3>OpenStreetMap</h3>'+
