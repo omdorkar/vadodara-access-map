@@ -1,0 +1,63 @@
+# Weekly AI street scan. Re-runs tools/scan_core.js on GitHub's servers so new Mapillary photos
+# (for example from volunteers using the Mapillary app) appear on the map without anyone running anything.
+# It can also be started by hand: Actions tab -> "AI street scan" -> Run workflow.
+name: AI street scan
+
+on:
+  schedule:
+    - cron: "30 2 * * 1"   # every Monday, 08:00 in India
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Mapillary detections and place names are cached between runs, so only new photos are fetched.
+      - name: Restore scan cache
+        uses: actions/cache@v4
+        with:
+          path: ai_cache
+          key: ai-cache-${{ github.run_id }}
+          restore-keys: ai-cache-
+
+      - name: Run the scan
+        run: node tools/ai_scan_node.js
+        env:
+          MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}
+
+      - name: Publish if anything changed
+        run: |
+          if git diff --quiet -- data/ai_scan.js data/ai_streets.js; then
+            echo "No change."
+            exit 0
+          fi
+          # The files carry a generation time; only publish when the actual results changed.
+          changed=no
+          for f in data/ai_scan.js data/ai_streets.js; do
+            old=$(git show HEAD:$f 2>/dev/null | sed 's/generated:"[^"]*"//')
+            new=$(sed 's/generated:"[^"]*"//' $f)
+            [ "$old" != "$new" ] && changed=yes
+          done
+          if [ "$changed" = yes ]; then
+            git config user.name "ai-scan bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/ai_scan.js data/ai_streets.js
+            git commit -m "AI street scan: weekly update"
+            git push
+          else
+            echo "Only the timestamp changed; nothing to publish."
+          fi

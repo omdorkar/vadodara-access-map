@@ -285,9 +285,11 @@
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="data/city.js"></script>
 <script src="data/vocab.js"></script>
 <script src="data/survey.js"></script>
 <script src="data/ai_scan.js"></script>
+<script src="data/ai_streets.js"></script>
 <script>
 // ---------- Settings: each feature switches on when its value is filled in ----------
 // Mapillary client token (starts with MLY|). Designed for public browser use. Can also be entered under Layers & filters.
@@ -322,7 +324,8 @@ const icon = (k, color="#fff") => '<svg viewBox="0 0 24 24" fill="none" stroke="
 // ---------- Data ----------
 const STUDY = L.latLngBounds([22.298,73.160],[22.322,73.200]);   // original core area, where the survey started
 // Whole of Vadodara and its near outskirts: searched for Mapillary photos and OpenStreetMap accessibility data.
-const CITY = L.latLngBounds([22.24,73.10],[22.40,73.27]);
+const CFG = window.CITY_CONFIG || { name:"Vadodara", box:{ s:22.24, w:73.10, n:22.40, e:73.27 }, center:[22.310,73.180], zoom:15 };
+const CITY = L.latLngBounds([CFG.box.s,CFG.box.w],[CFG.box.n,CFG.box.e]);
 
 // Approximate locations; descriptions are illustrative sample data.
 const SAMPLE = [
@@ -381,7 +384,7 @@ let toastTimer = null;
 function toast(msg){ const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ t.hidden = true; }, 3800); }
 
 // ---------- Map ----------
-const map = L.map("map", { zoomControl:false }).setView([22.310,73.180], 15);
+const map = L.map("map", { zoomControl:false }).setView(CFG.center, CFG.zoom);
 L.control.zoom({ position:"bottomright" }).addTo(map);
 const BASES = {
   street: L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -430,6 +433,34 @@ const SCAN_STYLE = {
   O:{ hex:"#9aa3ab", label:"Open road or highway, no footpath detected" }
 };
 const scanLayer = L.layerGroup().addTo(map);   // on by default
+// The same verdicts snapped onto OpenStreetMap roads (data/ai_streets.js): whole stretches of street get a colour.
+const STREETS = (window.AI_STREETS && Array.isArray(window.AI_STREETS.rows) ? window.AI_STREETS.rows : [])
+  .map(r => ({ v:r[0], name:r[1], highway:r[2], m:r[3], n:r[4], id:String(r[5]), coords:r[6] }));
+const STREET_KM = (window.AI_STREETS && window.AI_STREETS.km) || { F:0, N:0, O:0 };
+const streetLayer = L.layerGroup().addTo(map);   // on by default, drawn under the dots
+STREETS.forEach(st => {
+  const hex = { F:"#2e7d32", N:"#c62828", O:"#9aa3ab" }[st.v];
+  L.polyline(st.coords, { color:"#fff", weight:9, opacity:.9, interactive:false }).addTo(streetLayer);
+  L.polyline(st.coords, { color:hex, weight:6, opacity:.95 }).on("click", () => showStreet(st)).addTo(streetLayer);
+});
+scanLayer.eachLayer(l => l.bringToFront && l.bringToFront());   // keep photo dots above road lines
+function showStreet(st){
+  const r = SCAN.find(x => x.id === st.id);
+  const label = { F:"Footpath seen on this stretch", N:"No footpath seen on this stretch", O:"Open road, no footpath seen" }[st.v];
+  openPanel(
+    '<div id="scanPhoto" class="hero"><figcaption>Loading a photo of this stretch…</figcaption></div>'+
+    '<h2>'+label+'</h2><span class="chip ai">AI street scan &middot; unverified</span>'+
+    '<dl class="rows">'+
+      '<div><dt>Road</dt><dd>'+esc(st.name || "Unnamed road")+' <small style="color:var(--muted)">('+esc(st.highway.replace(/_/g," "))+')</small></dd></div>'+
+      '<div><dt>Length coloured</dt><dd>'+st.m+' m</dd></div>'+
+      '<div><dt>Based on</dt><dd>'+st.n+' street photo'+(st.n===1?'':'s')+' within 25 m</dd></div>'+
+    '</dl>'+
+    '<div class="callout"><b>How this was made</b>Each street photo was labelled by Mapillary\'s computer vision, then snapped to the nearest OpenStreetMap road. A stretch is coloured only where a photo backs it; everything else stays uncoloured because nobody has a photo of it yet.</div>'+
+    (r ? voteButtons(r.id) : '')+
+    '<div class="actions"><button class="btn" data-act="zoomTo">Zoom here</button><a class="btn" href="'+mlyLink(st.id)+'" target="_blank" rel="noopener">Open in Mapillary</a></div>',
+    { kind:"feature", r:{ lat:st.coords[0][0], lng:st.coords[0][1] } });
+  loadMlyPhoto(st.id, "scanPhoto");
+}
 const scanCount = k => SCAN.filter(r => r.v === k).length;
 const scanCross = SCAN.filter(r => r.flags.indexOf("c") >= 0);
 SCAN.filter(r => SCAN_STYLE[r.v]).forEach(r =>
@@ -515,7 +546,7 @@ const state = {
   src: { survey:true, community:true, user:true, sample: SURVEY.length === 0, context:true },
   types: new Set(Object.keys(CATS)),
   sevs: new Set(Object.keys(SEV)),
-  overlays: { mly:false, gaps:false, known:true, study:true, ai:false, scan:true },
+  overlays: { mly:false, gaps:false, known:true, study:true, ai:false, scan:true, streets:true },
   mlyCount: 0, mlyStatus: "", gapCount: 0, knownCount: 0, ovStatus: ""
 };
 
@@ -632,7 +663,9 @@ function showLayers(keepScroll){
     '<div class="actions" style="margin-top:8px"><button class="btn" data-act="loadMly">Load photos in view</button></div>'+
     (state.mlyStatus ? '<p class="status">'+esc(state.mlyStatus)+'</p>' : '')+
     '<h3>AI suggestions</h3>'+
-    toggleRow("ov","scan",'<span class="swatch"><svg width="22" height="14"><circle cx="5" cy="7" r="4" fill="#2e7d32" stroke="#fff" stroke-width="1.5"/><circle cx="11" cy="7" r="4" fill="#c62828" stroke="#fff" stroke-width="1.5"/><circle cx="17" cy="7" r="4" fill="none" stroke="#7b3fbf" stroke-width="2"/></svg></span>',"AI street scan",SCAN.filter(r => SCAN_STYLE[r.v]).length,state.overlays.scan)+
+    toggleRow("ov","streets",'<span class="swatch"><svg width="22" height="10"><line x1="1" y1="5" x2="10" y2="5" stroke="#2e7d32" stroke-width="5"/><line x1="12" y1="5" x2="21" y2="5" stroke="#c62828" stroke-width="5"/></svg></span>',"AI street scan: roads",STREETS.length,state.overlays.streets)+
+    '<p class="status">'+(Math.round((STREET_KM.F+STREET_KM.N)*10)/10)+' km of built-up road checked from photos: footpath seen on '+STREET_KM.F+' km, none seen on '+STREET_KM.N+' km. Roads with no photo stay uncoloured.</p>'+
+    toggleRow("ov","scan",'<span class="swatch"><svg width="22" height="14"><circle cx="5" cy="7" r="4" fill="#2e7d32" stroke="#fff" stroke-width="1.5"/><circle cx="11" cy="7" r="4" fill="#c62828" stroke="#fff" stroke-width="1.5"/><circle cx="17" cy="7" r="4" fill="none" stroke="#7b3fbf" stroke-width="2"/></svg></span>',"AI street scan: photos",SCAN.filter(r => SCAN_STYLE[r.v]).length,state.overlays.scan)+
     '<p class="status">Mapillary\'s computer vision checked '+SCAN.length+' street photos. On built-up streets in daylight, a footpath was detected in '+scanCount("F")+' of '+(scanCount("F")+scanCount("N"))+' ('+Math.round(100*scanCount("F")/Math.max(1,(scanCount("F")+scanCount("N"))))+'%). Green: footpath seen. Red: none seen. Grey: open road. Purple ring: zebra crossing to check for a ramp. Machine guesses, unverified.</p>'+
     scanSummaryHtml()+
     toggleRow("ov","ai",'<div class="pin" style="--c:#7b3fbf;width:20px;height:20px;border-radius:4px;border-style:dashed">'+icon("uneven")+'</div>',"AI-suggested (unverified)",AI_SUGGESTED.length,state.overlays.ai)+
@@ -655,7 +688,7 @@ function toggleRow(group, key, sw, label, count, on){
 }
 function setOverlay(k, on){
   state.overlays[k] = on;
-  const lyr = { mly:mlyLayer, gaps:gapLayer, known:knownLayer, study:studyLayer, ai:aiLayer, scan:scanLayer }[k];
+  const lyr = { mly:mlyLayer, gaps:gapLayer, known:knownLayer, study:studyLayer, ai:aiLayer, scan:scanLayer, streets:streetLayer }[k];
   if (on) lyr.addTo(map); else map.removeLayer(lyr);
 }
 

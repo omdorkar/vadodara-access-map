@@ -27,6 +27,12 @@ A model looked through contact sheets of the Mapillary photos (about 280 of 721)
 ## How the AI street scan works
 For every Mapillary photo in the city box, the tool downloads Mapillary's detection labels. A photo taken in daylight that contains a road is judged: if a sidewalk or pedestrian area is labelled, it is green. If not, and there are at least three buildings and no flyover or guard rail (a sign of a highway), it is red. Other roads are grey. Night photos are skipped. The rule is in tools/ai_scan.js so anyone can read and change it.
 
+## Streets
+Each judged photo is snapped to the nearest OpenStreetMap road within 25 m. Roads are cut into pieces of up to 50 m, and a piece takes the majority verdict of its photos. Neighbouring pieces with the same verdict are joined. Only pieces with a photo are coloured. Nothing is inferred for roads without photos: in OpenStreetMap, Vadodara has about 26,700 road segments and only 8 say whether there is a footpath, so there is no honest basis for guessing.
+
+## Updates
+The scan re-runs every Monday on GitHub (.github/workflows/ai-scan.yml) and publishes only if the results changed. New Mapillary photos therefore appear without anyone running anything.
+
 ## How to improve it
 1. People who live nearby confirm or reject each AI suggestion.
 2. Volunteers send photos from their own streets (see PHOTO_GUIDE.md) and the survey grows from real photos.

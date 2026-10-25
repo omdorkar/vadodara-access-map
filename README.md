@@ -22,12 +22,16 @@ Like the University of Alberta project, this map pairs people with machine visio
 
 1. **Photos.** Street-level photos from Mapillary (anyone can add them with the free app) plus Om's own photos.
 2. **Machine vision.** Mapillary runs semantic segmentation on every photo, labelling road, footpath, kerb, crossing, building and more.
-3. **A simple, checkable rule.** [tools/ai_scan.js](tools/ai_scan.js) asks of each daytime photo: is there a road, and is a footpath visible? It writes [data/ai_scan.js](data/ai_scan.js). Re-run it any time to pick up new photos:
-   `osascript -l JavaScript tools/ai_scan.js "$PWD"`
-4. **People check the AI.** Every dot has *Looks right / Looks wrong / Can't tell* buttons. Answers are exported with the reports.
-5. **Confirmed facts go to OpenStreetMap**, where every map app can use them.
+3. **A simple, checkable rule.** [tools/scan_core.js](tools/scan_core.js) asks of each daytime photo: is there a road, and is a footpath visible? It writes [data/ai_scan.js](data/ai_scan.js).
+4. **Streets, not just dots.** Each judged photo is snapped to the nearest OpenStreetMap road (within 25 m), so whole stretches of street are coloured green or red ([data/ai_streets.js](data/ai_streets.js)). A road with no photo stays uncoloured; nothing is guessed.
+5. **It updates itself.** A GitHub Action ([.github/workflows/ai-scan.yml](.github/workflows/ai-scan.yml)) re-runs the scan every Monday. Anyone who walks a street with the free Mapillary app adds to the map the following week. To run it by hand on a Mac: `osascript -l JavaScript tools/ai_scan.js "$PWD"`
+6. **People check the AI.** Every dot has *Looks right / Looks wrong / Can't tell* buttons. Answers are exported with the reports.
+7. **Confirmed facts go to OpenStreetMap**, where every map app can use them.
 
 First run (25 Oct 2026): 721 photos; 288 judged as built-up streets in daylight; a footpath was detected in 142 (49%) and not in 146. 13 zebra crossings were found. By area: Vadodara Bypass 32% (132 photos), Manjalpur 81% (90), Wadi 44% (32), Nava Bazaar 44% (27); other areas had too few photos. In a spot check of 12 "no footpath" dots, 8 clearly had none and 4 were unclear. The model almost never detects kerb ramps, so crossings are flagged to check, not counted as barriers. Coverage is mostly main roads photographed from vehicles.
+
+## Use it for another city
+Everything city-specific is in [data/city.js](data/city.js): the name, the box to scan, where the map opens and the time zone. Fork the repository, change that file, run the Action once (Actions tab, "AI street scan", Run workflow) and turn on GitHub Pages. The text on the page still mentions Vadodara in places and would need editing.
 
 ## What's on the map
 - **AI street scan** (small dots, on by default): green = footpath seen, red = no footpath seen on a built-up street, grey = open road, purple ring = zebra crossing to check for a ramp.
