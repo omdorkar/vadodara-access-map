@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vadodara Accessibility Status Note</title>
+<meta name="description" content="Status Note on Pedestrian Accessibility in Vadodara, October 2026: field survey, AI street scan, OpenStreetMap data gaps, the legal framework and recommendations. By Om Dorkar, Vadodara Access Map.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f7fb; --surface: #ffffff; --ink: #0f1b33; --muted: #55607a; --line: #dde3ee;
+  --accent: #1d4ed8; --gold-text: #8a6400; --gold: #d4a017; --accent-soft: #e3ebfd; --gold-soft: #fbf1d6; --bad: #b42318; --bad-soft: #fdeceb; --ok: #1f7a4d;
+  --serif: 'Fraunces', Georgia, serif; --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1424; --surface: #172036; --ink: #e8ecf5; --muted: #a3adc2; --line: #2a3550;
+    --accent: #7aa2ff; --gold-text: #e8c25a; --gold: #e8c25a; --accent-soft: #1a2747; --gold-soft: #2a2414; --bad: #f97066; --bad-soft: #3b1f1d; --ok: #5ccf96;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1424; --surface: #172036; --ink: #e8ecf5; --muted: #a3adc2; --line: #2a3550;
+  --accent: #7aa2ff; --gold-text: #e8c25a; --gold: #e8c25a; --accent-soft: #1a2747; --gold-soft: #2a2414; --bad: #f97066; --bad-soft: #3b1f1d; --ok: #5ccf96;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.7; }
+a { color: var(--accent); text-underline-offset: 3px; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+.topbar { border-bottom: 1px solid var(--line); background: var(--surface); }
+.topbar .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding-top: 10px; padding-bottom: 10px; font-size: .9rem; }
+.topbar .home { font-weight: 700; color: var(--ink); text-decoration: none; margin-right: auto; }
+.topbar a:not(.home) { color: var(--muted); text-decoration: none; }
+.topbar button { font: inherit; font-size: .85rem; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+header.doc { padding: 40px 0 10px; }
+.kicker { display: inline-block; font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gold-text); background: var(--gold-soft); border-radius: 999px; padding: 4px 12px; margin: 0 0 14px; }
+h1 { font-family: var(--serif); font-size: clamp(1.9rem, 4.6vw, 2.8rem); line-height: 1.15; margin: 0 0 10px; letter-spacing: -.01em; }
+.byline { color: var(--muted); font-size: .95rem; margin: 0 0 20px; }
+.abstract { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 12px; padding: 18px 20px; }
+.abstract p { margin: 0 0 10px; } .abstract p:last-child { margin: 0; }
+nav.toc { margin: 22px 0 6px; font-size: .92rem; }
+nav.toc ol { margin: 6px 0 0; padding-left: 20px; columns: 2; column-gap: 28px; }
+h2 { font-family: var(--serif); font-size: 1.55rem; line-height: 1.25; margin: 40px 0 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.08rem; margin: 22px 0 6px; }
+p { margin: 0 0 12px; }
+.figs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 14px 0 6px; }
+.fig { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; position: relative; overflow: hidden; }
+.fig::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, var(--accent), var(--gold)); }
+.fig b { display: block; font-family: var(--serif); font-size: 1.9rem; line-height: 1.15; }
+.fig span { display: block; font-size: .85rem; color: var(--muted); line-height: 1.4; margin-top: 4px; }
+.table-wrap { overflow-x: auto; margin: 10px 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: var(--accent-soft); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+tfoot td { font-weight: 700; background: var(--bg); }
+.sev { display: inline-block; font-size: .75rem; font-weight: 700; border-radius: 6px; padding: 1px 8px; text-transform: uppercase; letter-spacing: .04em; }
+.sev.high { background: var(--bad-soft); color: var(--bad); }
+.sev.med { background: var(--gold-soft); color: var(--gold-text); }
+.sev.low { background: var(--accent-soft); color: var(--accent); }
+.bar { display: inline-block; height: 8px; border-radius: 4px; background: var(--accent); vertical-align: middle; margin-right: 6px; }
+.callout { background: var(--gold-soft); border-radius: 12px; padding: 14px 18px; margin: 14px 0; }
+.callout strong { display: block; margin-bottom: 4px; }
+ul, ol { padding-left: 22px; margin: 0 0 12px; } li { margin-bottom: 6px; }
+.recs li { margin-bottom: 10px; }
+.refs { font-size: .9rem; } .refs li { margin-bottom: 8px; }
+footer { border-top: 1px solid var(--line); margin-top: 40px; padding: 18px 0 44px; color: var(--muted); font-size: .88rem; }
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .figs { grid-template-columns: 1fr 1fr; }
+  nav.toc ol { columns: 1; }
+}
+@media print {
+  .topbar, nav.toc, #print { display: none; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .fig, .abstract, .table-wrap { break-inside: avoid; }
+  a { color: #000; }
+}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap">
+  <a class="home" href="./">Vadodara Access Map</a>
+  <a href="./">Open the map</a>
+  <a href="report.html">Report a barrier</a>
+  <a href="https://omdorkar.github.io/">About Om</a>
+  <button id="print" type="button" onclick="window.print()">Print / save as PDF</button>
+</div></div>
+
+<main class="wrap">
+<header class="doc">
+  <p class="kicker">Status note · October 2026</p>
+  <h1>Status Note on Pedestrian Accessibility in Vadodara</h1>
+  <p class="byline">By Om Dorkar · Vadodara Access Map · Data as of 25 October 2026 (survey and AI scan) and 31 October 2026 (detector metrics)</p>
+  <div class="abstract">
+    <p>This status note gives an overview of how accessible Vadodara's streets, footpaths and transport entrances are for people who use a wheelchair, a walking stick or a pram, or who simply walk. It draws on three sources gathered by the <a href="./">Vadodara Access Map</a>: a field survey of 11 barriers photographed in the city, an AI scan of 721 openly licensed street-level photos, and an analysis of what OpenStreetMap records about footpaths and kerbs.</p>
+    <p>It places these findings next to India's legal and policy framework, including the Rights of Persons with Disabilities Act, 2016, the Supreme Court's November 2024 judgment in <i>Rajive Raturi v. Union of India</i>, and national transport accessibility data reported in Sangyan's <i>Status Note on Accessibility in Public Road Transport of India</i> (May 2025).</p>
+    <p>The note is meant as a factual starting point for the Vadodara Municipal Corporation, transport operators, disability groups, residents and researchers. It is a remote audit, not a full survey of the city, and its limits are set out in section 6.</p>
+  </div>
+  <nav class="toc" aria-label="Contents"><strong>Contents</strong>
+    <ol>
+      <li><a href="#key">Key figures</a></li>
+      <li><a href="#framework">Legal and policy framework</a></li>
+      <li><a href="#survey">Field survey findings</a></li>
+      <li><a href="#scan">AI street scan findings</a></li>
+      <li><a href="#osm">Gaps in open map data</a></li>
+      <li><a href="#limits">Limits of this note</a></li>
+      <li><a href="#recs">Recommendations</a></li>
+      <li><a href="#refs">References and data</a></li>
+    </ol>
+  </nav>
+</header>
+
+<section id="key">
+  <h2>1. Key figures</h2>
+  <div class="figs">
+    <div class="fig"><b>11</b><span>barriers photographed and recorded in the field survey, 4 of them high severity</span></div>
+    <div class="fig"><b>721</b><span>street-level photos scanned across Vadodara; 331 could be judged</span></div>
+    <div class="fig"><b>57%</b><span>of judged photos showed no footpath (189 of 331)</span></div>
+    <div class="fig"><b>13 : 1</b><span>zebra crossings detected versus kerb cuts detected in the same photos</span></div>
+    <div class="fig"><b>8</b><span>of about 26,700 OpenStreetMap road segments in Vadodara say whether a footpath exists</span></div>
+    <div class="fig"><b>0</b><span>OpenStreetMap <code>kerb</code> tags in the city box; 1 <code>tactile_paving</code> tag</span></div>
+  </div>
+</section>
+
+<section id="framework">
+  <h2>2. Legal and policy framework</h2>
+  <h3>2.1 The Rights of Persons with Disabilities Act, 2016</h3>
+  <p>The RPwD Act makes accessibility a legal duty rather than a favour. Section 40 asks the Central Government to set accessibility standards for the physical environment and transport. Section 41 requires steps to make transport, including bus stops and terminals, accessible. Section 44 says no building plan should be approved unless it follows those standards. Sections 45 and 46 set time limits for making existing public buildings and services accessible.</p>
+  <h3>2.2 Rajive Raturi v. Union of India (8 November 2024)</h3>
+  <p>The Supreme Court held that Rule 15 of the RPwD Rules, 2017 was inconsistent with the Act because it set out guidelines rather than enforceable, non-negotiable standards. It directed the Union Government to frame mandatory accessibility rules within three months, while progressive compliance with the existing rules continued in the meantime.</p>
+  <h3>2.3 National guidelines</h3>
+  <ul>
+    <li><b>Harmonised Guidelines and Standards for Universal Accessibility in India (2021)</b>, Ministry of Housing and Urban Affairs: design guidance for buildings and public spaces, including footpaths, kerb ramps and tactile paving.</li>
+    <li><b>IRC:103-2022, Guidelines for Pedestrian Facilities</b>, Indian Roads Congress: the road-engineering standard for footpaths and crossings.</li>
+    <li><b>Accessible India Campaign (Sugamya Bharat Abhiyan)</b>, launched in December 2015, with targets for accessible buildings, transport and information.</li>
+  </ul>
+  <h3>2.4 National transport context</h3>
+  <p>Sangyan's <i>Status Note on Accessibility in Public Road Transport of India</i> (May 2025), based on information from the Ministry of Road Transport and Highways under the RTI Act, reports that as of March 2025, <b>35.08% of buses operated by 61 State Transport Undertakings were accessible</b>, and <b>10,873 were fully wheelchair-accessible</b>. It lists the bus-design rules behind this (GSR 159(E), GSR 959(E), AIS:153 and AIS:052) and the <i>Accessibility Guidelines for Bus Terminals and Bus Stops</i> (2022).</p>
+  <div class="callout"><strong>Why this matters for Vadodara</strong>An accessible bus is only useful if a person can reach the bus stop. The footpaths, kerbs and station entrances in this note are that "first and last metre". Nationally, an AFP report in July 2026 cited a 2024 Supreme Court-appointed committee finding that 84% of footpaths it examined failed basic engineering standards.</div>
+</section>
+
+<section id="survey">
+  <h2>3. Field survey findings</h2>
+  <p>Om Dorkar photographed and recorded 11 barriers in Vadodara. Each record has a barrier type and a severity, which are the surveyor's judgement. In four records the photo shows the setting but not the barrier itself, and the map says so. Kerb heights and slopes were not measured.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Area</th><th>Location</th><th>Barrier</th><th>Severity</th><th>What was found</th></tr></thead>
+    <tbody>
+      <tr><td>Station area</td><td>Vadodara Junction railway station, back side</td><td>Stairs only</td><td><span class="sev high">High</span></td><td>Entrance reached only by a flight of steps with a handrail. No ramp visible.</td></tr>
+      <tr><td>Sayajiganj</td><td>Central bus station</td><td>Missing ramp</td><td><span class="sev high">High</span></td><td>Footpath at the bus station has no ramp; a kerb runs along it, with a signpost and a leaning tree at the edge.</td></tr>
+      <tr><td>Sayaji Baug</td><td>Vinoba Bhave Road, near Kala Ghoda</td><td>Missing ramp</td><td><span class="sev high">High</span></td><td>Ramps are disconnected from the footpath, and the footpath has no slopes.</td></tr>
+      <tr><td>Gorwa</td><td>Unnamed road</td><td>Uneven</td><td><span class="sev high">High</span></td><td>No footpath or side path at all; people walk on a road with a broken edge and poles at the roadside.</td></tr>
+      <tr><td>Sayaji Baug</td><td>Sayaji Baug Zoo</td><td>Broken ramp</td><td><span class="sev med">Med</span></td><td>Tiles broken on the ramp.</td></tr>
+      <tr><td>Alkapuri</td><td>GJ SH 11</td><td>Obstacle</td><td><span class="sev med">Med</span></td><td>No footpath; roadside debris blocks the flat surface a ramp would need.</td></tr>
+      <tr><td>Nava Bazaar</td><td>Dandia Bazaar Road</td><td>Uneven</td><td><span class="sev med">Med</span></td><td>No footpath; a drain grate sits in a patched road surface.</td></tr>
+      <tr><td>Harni</td><td>Harni Airport Road</td><td>Uneven</td><td><span class="sev med">Med</span></td><td>Road edge broken and eroded; water runs across the surface in the monsoon.</td></tr>
+      <tr><td>Harni</td><td>Side road near Harni Airport Road</td><td>Missing ramp</td><td><span class="sev med">Med</span></td><td>No ramps (noted on site; the photo shows the wet ground, not the ramp).</td></tr>
+      <tr><td>Not named</td><td>Unnamed path</td><td>Uneven</td><td><span class="sev med">Med</span></td><td>No flat surface in the monsoon; mud and standing water, with a stall taking up part of the width.</td></tr>
+      <tr><td>Alkapuri</td><td>Road median</td><td>Uneven</td><td><span class="sev low">Low</span></td><td>Mismatched paving with gaps and different heights.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Summary by type</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Barrier type</th><th class="num">Records</th><th></th></tr></thead>
+    <tbody>
+      <tr><td>Uneven surface</td><td class="num">5</td><td><span class="bar" style="width:150px"></span></td></tr>
+      <tr><td>Missing ramp</td><td class="num">3</td><td><span class="bar" style="width:90px"></span></td></tr>
+      <tr><td>Stairs only</td><td class="num">1</td><td><span class="bar" style="width:30px"></span></td></tr>
+      <tr><td>Broken ramp</td><td class="num">1</td><td><span class="bar" style="width:30px"></span></td></tr>
+      <tr><td>Obstacle</td><td class="num">1</td><td><span class="bar" style="width:30px"></span></td></tr>
+    </tbody>
+    <tfoot><tr><td>Total</td><td class="num">11</td><td>4 high · 6 medium · 1 low</td></tr></tfoot>
+  </table></div>
+  <p>Two of the four high-severity barriers are at transport entrances: the back of Vadodara Junction railway station and the central bus station. In three records (GJ SH 11 in Alkapuri, Dandia Bazaar Road and the Gorwa road) there was no footpath at all, so pedestrians must walk on the carriageway.</p>
+</section>
+
+<section id="scan">
+  <h2>4. AI street scan findings</h2>
+  <p>The map runs a weekly scan of every openly licensed Mapillary street photo inside the Vadodara box (22.24–22.40 N, 73.10–73.27 E). Mapillary's own computer vision labels each photo. A simple, published rule then marks a daylight photo of a road green if a footpath is detected, red if it is a built-up street with no footpath detected, and grey if it is an open road. Of 721 photos, 390 could not be judged (night, no road, or unclear).</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Area</th><th class="num">Judged photos</th><th class="num">Footpath</th><th class="num">Built-up, no footpath</th><th class="num">Open road</th><th class="num">Footpath share</th></tr></thead>
+    <tbody>
+      <tr><td>Vadodara Bypass</td><td class="num">152</td><td class="num">42</td><td class="num">90</td><td class="num">20</td><td class="num">28%</td></tr>
+      <tr><td>Near Manjalpur</td><td class="num">112</td><td class="num">73</td><td class="num">17</td><td class="num">22</td><td class="num">65%</td></tr>
+      <tr><td>Nava Bazaar</td><td class="num">27</td><td class="num">12</td><td class="num">15</td><td class="num">0</td><td class="num">44%</td></tr>
+      <tr><td>Wadi</td><td class="num">24</td><td class="num">13</td><td class="num">11</td><td class="num">0</td><td class="num">54%</td></tr>
+      <tr><td>Near Wadi</td><td class="num">8</td><td class="num">1</td><td class="num">7</td><td class="num">0</td><td class="num">13%</td></tr>
+      <tr><td>Near Sayaji Park</td><td class="num">7</td><td class="num">0</td><td class="num">6</td><td class="num">1</td><td class="num">0%</td></tr>
+      <tr><td>Ashwamegh Nagar</td><td class="num">1</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">n too small</td></tr>
+    </tbody>
+    <tfoot><tr><td>All areas</td><td class="num">331</td><td class="num">142</td><td class="num">146</td><td class="num">43</td><td class="num">43%</td></tr></tfoot>
+  </table></div>
+  <ul>
+    <li>Snapped onto OpenStreetMap roads, the scan covers about <b>3.3 km</b> of road: 1.5 km with a footpath detected, 1.6 km of built-up street with none, and 0.2 km of open road.</li>
+    <li>The scan saw <b>13 zebra crossings but only 1 kerb cut</b>. Kerb ramps are small and often missed by the detector, so this does not prove they are absent. It does mark 13 crossings worth checking on foot.</li>
+    <li>The imagery is old in places: <b>383 of the 721 photos (53%) date from 2014–2015</b>, 134 from 2022 and 201 from 2025. Streets may have changed since.</li>
+    <li>A second, learning detector built for this project reaches a cross-validated accuracy of <b>74.7%</b> on whether a footpath is present (precision 71.7%, recall 80.3%). In a manual spot check of 12 "no footpath" results, 8 were clearly right and 4 unclear.</li>
+  </ul>
+</section>
+
+<section id="osm">
+  <h2>5. Gaps in open map data</h2>
+  <p>Navigation apps and planners often rely on OpenStreetMap. For Vadodara it records almost nothing about accessibility:</p>
+  <ul>
+    <li>Of about <b>26,700 road segments</b>, only <b>8</b> say whether there is a footpath.</li>
+    <li>Among 166 mapped elements checked in the whole city box there are <b>62 <code>wheelchair</code> tags, 1 <code>tactile_paving</code> tag and no <code>kerb</code> tags</b> (25 October 2026).</li>
+    <li>In the original core study area (Alkapuri, Sayaji Baug and the station), 26 footways were mapped and none carried <code>kerb</code>, <code>wheelchair</code> or <code>tactile_paving</code> tags (18 October 2026).</li>
+  </ul>
+  <p>A person planning a route in a wheelchair therefore cannot learn from open data whether a street has a usable footpath or a kerb ramp. Filling this gap is one of the cheapest improvements available.</p>
+</section>
+
+<section id="limits">
+  <h2>6. Limits of this note</h2>
+  <ul>
+    <li>It is a <b>remote audit</b> with a small field survey, not a systematic walk of the city. It gives no citywide percentage of accessible footpaths.</li>
+    <li>No kerb heights, slopes or widths were measured.</li>
+    <li>No one who uses a wheelchair, pram or cane has yet reviewed the findings.</li>
+    <li>AI results are machine estimates and are labelled as such on the map. The street imagery is uneven: most of it covers highways and the north and east of the city, and much of it is old.</li>
+    <li>Google Maps and Street View imagery was not used, because its terms forbid copying or analysing it.</li>
+  </ul>
+</section>
+
+<section id="recs">
+  <h2>7. Recommendations</h2>
+  <ol class="recs">
+    <li><b>Fix the transport entrances first.</b> The railway authorities should add a ramp at the back entrance of Vadodara Junction, and the bus station operator should add a kerb ramp on the station footpath. These are the places where an accessible bus or train is lost if the entrance is not.</li>
+    <li><b>Check the 13 detected zebra crossings for kerb ramps</b> and add ramps where they are missing, following IRC:103-2022 and the 2021 Harmonised Guidelines.</li>
+    <li><b>Reconnect the Sayaji Baug ramps</b> on Vinoba Bhave Road to the footpath, and repair the broken ramp tiles at the zoo.</li>
+    <li><b>Build continuous footpaths</b> on roads where people now walk on the carriageway, starting with GJ SH 11 in Alkapuri, Dandia Bazaar Road and the Gorwa road in this survey.</li>
+    <li><b>Publish accessibility data.</b> The Vadodara Municipal Corporation could publish which streets, crossings and public buildings have been audited under the RPwD Act. A Right to Information request is the natural next step if this is not public.</li>
+    <li><b>Map what exists.</b> Residents and mappers can add <code>sidewalk</code>, <code>kerb</code> and <code>tactile_paving</code> tags to OpenStreetMap so that route-planning tools can use them.</li>
+    <li><b>Involve disabled people</b> in every audit, including the next round of this one.</li>
+  </ol>
+  <h3>Next steps for this project</h3>
+  <ul>
+    <li>Invite residents to confirm or reject each AI result on the map's labelling page, so the detector learns from real local judgement.</li>
+    <li>Grow the field survey with photos from volunteers across the city.</li>
+    <li>Share this note with the city and with local disability groups, and log any reply.</li>
+    <li>Update the note as the weekly scan and the survey grow.</li>
+  </ul>
+</section>
+
+<section id="refs">
+  <h2>8. References and data</h2>
+  <ol class="refs">
+    <li>Vadodara Access Map: <a href="./">live map</a>, <a href="https://github.com/omdorkar/vadodara-access-map">code and data</a>, including <a href="https://github.com/omdorkar/vadodara-access-map/blob/main/docs/METHOD.md">method and limits</a>, <a href="https://github.com/omdorkar/vadodara-access-map/blob/main/DATA_SOURCES.md">data sources and checked facts</a> and <a href="https://github.com/omdorkar/vadodara-access-map/blob/main/METRICS.md">detector metrics</a>.</li>
+    <li>Sangyan, <i>Status Note on Accessibility in Public Road Transport of India</i> (May 2025): <a href="https://sangyan.medium.com/status-note-on-accessibility-in-public-road-transport-of-india-may-2025-c4aa7993401c">Medium</a>. Related: <i>Factsheet: Accessible India Campaign</i> (May 2024) and <i>Status Note for Accessibility in Public Transport of India</i> (March 2025).</li>
+    <li>Supreme Court of India, <i>Rajive Raturi v. Union of India</i>, judgment of 8 November 2024: <a href="https://api.sci.gov.in/supremecourt/2005/9321/9321_2005_1_1503_56986_Judgement_08-Nov-2024.pdf">judgment (PDF)</a>; summary in <a href="https://www.scconline.com/blog/post/2024/11/12/union-mandate-rules-under-rpwd-act-ensure-accessibility-of-public-places-supreme-court/">SCC Online</a>.</li>
+    <li>The Rights of Persons with Disabilities Act, 2016, Sections 40, 41, 44, 45 and 46.</li>
+    <li>Ministry of Housing and Urban Affairs, <i>Harmonised Guidelines and Standards for Universal Accessibility in India</i> (2021).</li>
+    <li>Indian Roads Congress, <i>IRC:103-2022 Guidelines for Pedestrian Facilities</i>.</li>
+    <li>AFP, "India's choked pavements fail pedestrians" (July 2026), via <a href="https://cambodianess.com/article/indias-choked-pavements-fail-pedestrians">Cambodianess</a>.</li>
+    <li>Street imagery: <a href="https://www.mapillary.com/">Mapillary</a> contributors, CC-BY-SA 4.0. Map data: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, ODbL.</li>
+  </ol>
+</section>
+</main>
+
+<footer><div class="wrap">
+  Status Note on Pedestrian Accessibility in Vadodara, October 2026. Written by Om Dorkar for the Vadodara Access Map. Text CC-BY-SA 4.0; derived OpenStreetMap figures ODbL. Corrections are welcome through the <a href="report.html">report page</a> or on <a href="https://github.com/omdorkar/vadodara-access-map/issues">GitHub</a>.
+</div></footer>
+<script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
+</body>
+</html>
