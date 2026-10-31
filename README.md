@@ -39,7 +39,6 @@ Everything city-specific is in [data/city.js](data/city.js): the name, the box t
 - **Field survey pins** (square): Om's own photos, each credited. A few show the setting but not the barrier itself, and their notes say so. Tap one for the photo, severity, details and location.
 - **Your reports** (ringed): reports a visitor makes, stored in their own browser for now (exportable as JSON).
 - **Documentation only** (grey, dotted): photos that show no footpath barrier (Canal Road) or were taken far away (Pavagadh Hill). Not counted.
-- **Sample data** (faded, dashed): 16 illustrative pins, clearly labelled. They are not findings, and they hide automatically once real survey data exists.
 - **AI-suggested (unverified)** (purple diamonds, off by default): open street photos the detector proposes, or that look like one of Om's confirmed barrier photos. Nobody has checked them on the ground. They are not findings and are not counted. [Check them](https://omdorkar.github.io/vadodara-access-map/label.html) and the detector learns.
 - **Mapillary photos** (green dots): real street-level imagery (CC-BY-SA). You can mark a barrier you see in a photo.
 - **Already known in OSM** (green / orange / red dots): places and kerbs where OpenStreetMap mappers recorded wheelchair access, kerb height or tactile paving. These are other people's data, shown as context.
@@ -90,7 +89,7 @@ osascript -l JavaScript tools/process_photos.js "$PWD"
 | `DATA_SOURCES.md` | Every data source and its licence |
 
 ## Limitations
-Sample pins are invented (and hide once survey data exists). Visitor reports stay in their own browser until shared storage is switched on, and shared ones are reviewed for plausibility, not verified on the ground. OSM coverage of footways here is thin. Satellite imagery can't show ramp condition. Phone GPS is accurate to about 5–15 m.
+Visitor reports stay in their own browser until shared storage is switched on, and shared ones are reviewed for plausibility, not verified on the ground. OSM coverage of footways here is thin. Satellite imagery can't show ramp condition. Phone GPS is accurate to about 5–15 m.
 
 ## Roadmap
 1. Field survey: 10–15 barriers with geotagged photos, plus a Mapillary street-level sequence of the route (in progress).

@@ -62,7 +62,7 @@
 
   <h2>About this report</h2>
   <ul class="notes">
-    <li><b>What it covers:</b> only barriers photographed on site during the field survey. Sample data and unreviewed visitor reports are not included.</li>
+    <li><b>What it covers:</b> only barriers photographed on site during the field survey. Unreviewed visitor reports are not included.</li>
     <li><b>Severity:</b> High = a wheelchair user cannot pass. Medium = possible but difficult or unsafe. Low = inconvenient.</li>
     <li><b>Locations</b> come from each photo's GPS, which is accurate to about 5–15 m. Street names come from OpenStreetMap and were checked by hand where needed.</li>
     <li><b>Suggested fixes</b> are general starting points, not engineering designs.</li>
@@ -84,7 +84,7 @@ const safePath = u => /^photos\/[\w.\-\/]+$/.test(String(u||"")) ? u : "";
 const fmt = ts => new Date(ts).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" });
 const SEV_ORDER = { high:0, med:1, low:2 };
 
-// Survey records only, with a location. Sample and visitor data never go into this report.
+// Survey records only, with a location. Visitor data never goes into this report.
 const items = (Array.isArray(window.SURVEY) ? window.SURVEY : [])
   .filter(r => typeof r.lat === "number" && typeof r.lng === "number");
 
@@ -102,7 +102,7 @@ function answer(r){
 }
 
 if (!items.length) {
-  $("content").innerHTML = '<div class="empty"><b>No field-survey data yet.</b><br>This report fills in automatically once survey photos are processed. It never includes sample data.</div>';
+  $("content").innerHTML = '<div class="empty"><b>No field-survey data yet.</b><br>This report fills in automatically once survey photos are processed.</div>';
 } else {
   const count = (arr, key) => arr.reduce((m, r) => (m[r[key] || ""] = (m[r[key] || ""] || 0) + 1, m), {});
   const bySev = count(items, "sev"), byCat = count(items, "cat");
