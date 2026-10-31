@@ -259,7 +259,7 @@
     </section>
     <section class="tab-panel" id="t-limits" hidden>
       <ul>
-        <li>Reports you add are stored only in your browser until exported. There is no shared database yet.</li>
+        <li>Reports you add are sent for review and appear for everyone only once approved. A copy stays in your browser.</li>
         <li>Very few footways in this area are mapped in OpenStreetMap (26 footway ways when checked, none with accessibility tags).</li>
         <li>Satellite imagery cannot show the condition of a ramp. It is context only.</li>
         <li>Phone GPS can be off by 5–15 m. Om's photos cover a few places, not the whole city.</li>
@@ -295,8 +295,8 @@ const MAPILLARY_TOKEN = "MLY|29011422828469872|1bb408ddfd46eb46254d2ee409d054b9"
 // Om's OpenStreetMap username, for the live "edits to OpenStreetMap" count.
 const OSM_USERNAME = "Om Dorkar";
 // Supabase project URL and *anon* key (public by design; protected by row-level security). Never the service_role key.
-const SUPABASE_URL = "";
-const SUPABASE_ANON_KEY = "";
+const SUPABASE_URL = "https://uchokyiwyrgsgfhkgjns.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaG9reWl3eXJnc2dmaGtnam5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MzIwMDgsImV4cCI6MjEwOTAwODAwOH0.pzXM7CxclgFkPoZ7UjSmMT1US3amRTrkVMs-lwjt2kA";
 const OVERPASS_SERVERS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter"];
 
 // ---------- Vocabulary (shared with report.html, see data/vocab.js) ----------

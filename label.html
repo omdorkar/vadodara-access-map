@@ -57,8 +57,8 @@
 <script src="data/ai_barriers.js"></script>
 <script>
 // Same settings as index.html. Fill these in once Supabase is set up (docs/SHARED_REPORTS.md); until then votes stay in this browser and can be exported.
-const SUPABASE_URL = "";
-const SUPABASE_ANON_KEY = "";
+const SUPABASE_URL = "https://uchokyiwyrgsgfhkgjns.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaG9reWl3eXJnc2dmaGtnam5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MzIwMDgsImV4cCI6MjEwOTAwODAwOH0.pzXM7CxclgFkPoZ7UjSmMT1US3amRTrkVMs-lwjt2kA";
 const supaOn = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 const LABELS = Object.assign({ no_footpath:{label:"No footpath at all"}, ok_footpath:{label:"Footpath present, no barrier"}, open_road:{label:"Open road / highway"} }, window.VAM_VOCAB.CATS);
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
