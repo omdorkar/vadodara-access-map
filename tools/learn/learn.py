@@ -22,12 +22,21 @@ CHECKS_DIR = os.path.join(ROOT, "labels", "checks_export")
 WEAK = {"F": "ok_footpath", "N": "no_footpath", "O": "open_road"}
 
 def pull_checks():
-    url, key = os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_KEY")
+    url, key = (os.environ.get("SUPABASE_URL") or "").strip(), (os.environ.get("SUPABASE_KEY") or "").strip()
     rows = []
     if url and key:
         import requests
-        r = requests.get(f"{url}/rest/v1/checks?select=image_id,label,voter&limit=100000", headers={"apikey": key, "Authorization": f"Bearer {key}"}, timeout=60)
-        r.raise_for_status(); rows = r.json()
+        if "://" not in url: url = "https://" + url   # tolerate a secret saved without the scheme
+        url = url.rstrip("/").removesuffix("/rest/v1")
+        try:
+            while True:   # Supabase returns at most 1000 rows per request, so page through
+                r = requests.get(f"{url}/rest/v1/checks?select=image_id,label,voter&order=id&limit=1000&offset={len(rows)}",
+                                 headers={"apikey": key, "Authorization": f"Bearer {key}"}, timeout=60)
+                r.raise_for_status(); page = r.json(); rows += page
+                if len(page) < 1000: break
+        except Exception as e:   # e.g. a paused free project: carry on with exported votes rather than fail the run
+            print(f"::warning::Could not read votes from Supabase ({e}); using labels/checks_export only.")
+            rows = []
     for f in glob.glob(os.path.join(CHECKS_DIR, "*.json")):
         rows += [c for c in json.load(open(f)).get("checks", []) if c.get("image_id") and c.get("label")]
     return rows
