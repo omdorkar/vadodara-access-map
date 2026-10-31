@@ -49,7 +49,7 @@ create table if not exists public.checks (
   shown_label text,                       -- what the AI proposed when the person voted
   model       text,                       -- model version that made the proposal
   voter       text not null check (length(voter) between 8 and 64),
-  unique (image_id, voter)                -- one vote per person per photo; re-voting replaces via upsert
+  unique (image_id, voter)                -- one vote per person per photo; the first vote stands
 );
 
 alter table public.checks enable row level security;
@@ -57,8 +57,8 @@ alter table public.checks enable row level security;
 drop policy if exists "anyone can vote" on public.checks;
 create policy "anyone can vote" on public.checks for insert to anon with check (true);
 
+-- No update policy: `voter` is not authenticated, so an update rule would let anyone overwrite anyone's vote.
 drop policy if exists "anyone can change their own vote" on public.checks;
-create policy "anyone can change their own vote" on public.checks for update to anon using (true) with check (true);
 
 drop policy if exists "anyone can read votes" on public.checks;
 create policy "anyone can read votes" on public.checks for select to anon using (true);
