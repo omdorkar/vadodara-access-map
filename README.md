@@ -71,11 +71,14 @@ osascript -l JavaScript tools/process_photos.js "$PWD"
 |---|---|
 | `index.html` | The map (Leaflet 1.9.4 from cdnjs). Settings for Mapillary, OSM username and Supabase are at the top of its script |
 | `report.html` | Printable street report, generated from the survey data |
+| `label.html` | Check-the-AI page: one photo, the AI's proposal, Y/N votes that become training labels |
 | `data/survey.js` | Field survey records (generated, hand-editable: type, severity, note, `tags`, street) |
 | `data/vocab.js` | Barrier types, severity levels, questions and suggested fixes, shared by both pages |
+| `data/city.js` | City name, scan box, map start and time zone (the only file to change for another city) |
+| `data/ai_scan.js`, `data/ai_streets.js` | Footpath scan results per photo and per street (generated) |
 | `photos/web/` | Published survey photos and thumbnails |
 | `tools/process_photos.js` | Reads photo GPS, makes web copies, looks up street names, writes `data/survey.js` |
-| `label.html` | Check-the-AI page: one photo, the AI's proposal, Y/N votes that become training labels |
+| `tools/scan_core.js`, `tools/ai_scan*.js` | Footpath scan from Mapillary detections |
 | `tools/learn/` | Learning loop: fetch open photos, score, learn from votes, export dataset (`docs/LEARNING_LOOP.md`) |
 | `data/ai_barriers.js` | Detector proposals, one row per photo (generated) |
 | `labels/gold.csv` | Confirmed labels from votes (generated); `labels/checks_export/` for exported vote files |
@@ -83,8 +86,19 @@ osascript -l JavaScript tools/process_photos.js "$PWD"
 | `METRICS.md` | Detector accuracy, rewritten every run |
 | `supabase/schema.sql` | Database tables and access rules for shared reports and AI checks |
 | `docs/SHARED_REPORTS.md` | Setting up and reviewing shared reports |
+| `docs/LEARNING_LOOP.md` | How the detector learns from votes, and its limits |
+| `docs/METHOD.md` | What was and was not done, and the limits of a remote audit |
+| `docs/REFERENCES.md` | Checked news sources on the same barriers in other Indian cities |
 | `docs/OUTREACH.md` | Consent note, interview questions, letters to a disability organisation and the VMC |
 | `DATA_SOURCES.md` | Every data source and its licence |
+| `.github/workflows/` | `ai-scan.yml` (footpath scan) and `learn.yml` (learning loop), both every Monday |
+
+## Keeping it running
+- **Automatic:** every Monday GitHub Actions re-runs the footpath scan and the learning loop and commits new results (author "ai-learn bot"). Both can be run by hand from the Actions tab.
+- **Repository secrets** (Settings → Secrets and variables → Actions): `SUPABASE_URL` and `SUPABASE_KEY` (the public anon key) let the learning loop read votes; `MAPILLARY_TOKEN` is optional.
+- **Weekly, by hand:** approve or reject pending visitor reports in Supabase ([docs/SHARED_REPORTS.md](docs/SHARED_REPORTS.md)).
+- **If Supabase pauses** the free project after a quiet week, sign in and click Restore project. Until then the map still works and the learning loop falls back to exported votes.
+- Everything used is free for a public repository.
 
 ## Limitations
 Visitor reports are reviewed for plausibility, not verified on the ground. OSM coverage of footways here is thin. Satellite imagery can't show ramp condition. Phone GPS is accurate to about 5–15 m.
@@ -92,7 +106,7 @@ Visitor reports are reviewed for plausibility, not verified on the ground. OSM c
 ## Roadmap
 1. Field survey: 10–15 barriers with geotagged photos, plus a Mapillary street-level sequence of the route (in progress).
 2. Contribute verified kerb, tactile-paving and entrance data to OpenStreetMap, from the ground survey only.
-3. Shared, moderated storage for condition problems OSM doesn't map (broken ramps, blocked footpaths), so everyone sees each other's reports.
+3. ~~Shared, moderated storage for condition problems OSM doesn't map (broken ramps, blocked footpaths).~~ Live since 31 Oct 2026 (Supabase): visitor reports go to review and appear for everyone once approved; votes from label.html are shared.
 4. Talk to wheelchair users and a local disability organisation; send a street-by-street report to the Vadodara Municipal Corporation.
 5. ~~A small ramp/obstacle detector trained only on suitably licensed photos.~~ Built as a learning loop (docs/LEARNING_LOOP.md): it proposes, people confirm, it refits weekly. Fine-tune a segmentation model once confirmed labels pass ~500.
 
