@@ -106,9 +106,9 @@ Visitor reports are reviewed for plausibility, not verified on the ground. OSM c
 ## Roadmap
 1. Field survey: 10–15 barriers with geotagged photos, plus a Mapillary street-level sequence of the route (in progress).
 2. Contribute verified kerb, tactile-paving and entrance data to OpenStreetMap, from the ground survey only.
-3. ~~Shared, moderated storage for condition problems OSM doesn't map (broken ramps, blocked footpaths).~~ Live since 31 Oct 2026 (Supabase): visitor reports go to review and appear for everyone once approved; votes from label.html are shared.
+3. **Done (31 Oct 2026):** shared, moderated storage (Supabase) for condition problems OSM doesn't map, such as broken ramps and blocked footpaths. Visitor reports go to review and appear for everyone once approved; votes from label.html are shared.
 4. Talk to wheelchair users and a local disability organisation; send a street-by-street report to the Vadodara Municipal Corporation.
-5. ~~A small ramp/obstacle detector trained only on suitably licensed photos.~~ Built as a learning loop (docs/LEARNING_LOOP.md): it proposes, people confirm, it refits weekly. Fine-tune a segmentation model once confirmed labels pass ~500.
+5. **Built:** a small ramp/obstacle detector trained only on suitably licensed photos, as a learning loop (docs/LEARNING_LOOP.md): it proposes, people confirm, it refits weekly. Next: fine-tune a segmentation model once confirmed labels pass ~500.
 
 ## Prior work
 The method follows the University of Alberta's [Atlas / Click&Push](https://www.ualberta.ca/en/folio/2025/04/overcoming-obstacles.html) project, which combines crowdsourced barrier reports with camera and GPS data. The reporting questions follow [MapComplete OnWheels](https://mapcomplete.org/onwheels).
