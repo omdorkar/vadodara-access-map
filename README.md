@@ -39,7 +39,7 @@ Everything city-specific is in [data/city.js](data/city.js): the name, the box t
 - **Your reports** (ringed): reports a visitor makes, stored in their own browser for now (exportable as JSON).
 - **Documentation only** (grey, dotted): photos that show no footpath barrier (Canal Road) or were taken far away (Pavagadh Hill). Not counted.
 - **Sample data** (faded, dashed): 16 illustrative pins, clearly labelled. They are not findings, and they hide automatically once real survey data exists.
-- **AI-suggested (unverified)** (purple diamonds, off by default): a few Mapillary street photos where a model (Claude) spotted a possible barrier. Nobody has checked them on the ground. They are not findings and are not counted.
+- **AI-suggested (unverified)** (purple diamonds, off by default): a few Mapillary street photos where an AI model spotted a possible barrier. Nobody has checked them on the ground. They are not findings and are not counted.
 - **Mapillary photos** (green dots): real street-level imagery (CC-BY-SA). You can mark a barrier you see in a photo.
 - **Already known in OSM** (green / orange / red dots): places and kerbs where OpenStreetMap mappers recorded wheelchair access, kerb height or tactile paving. These are other people's data, shown as context.
 - **OSM possible gaps** (purple dashes): mapped footways and crossings missing `kerb` / `wheelchair` / `tactile_paving` tags. This shows missing data, not a confirmed barrier, with a link to answer it in MapComplete. Off by default; switch it on under Layers & filters.

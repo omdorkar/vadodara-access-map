@@ -252,7 +252,7 @@
         <li><b>Om's photos:</b> taken in Vadodara and placed by hand from the location Om gave. Type, severity and notes are Om's. Om could not do a systematic walk, so there is no count of places checked.</li>
         <li><b>AI street scan:</b> Mapillary runs semantic segmentation on every uploaded photo (it labels road, footpath, kerb, building, crossing and more). <code>tools/ai_scan.js</code> asks of each daytime photo: is there a road, and is a footpath visible? Built-up streets with none are red. Night photos and photos with no road are not judged. Anyone can re-run it as new photos are added.</li>
         <li><b>Checking the AI:</b> in a spot check of 12 red dots, 8 clearly had no footpath and 4 were unclear. The AI almost never detects kerb ramps, so crossings are marked "check for a ramp", not "no ramp".</li>
-        <li><b>AI-suggested barriers</b> (purple diamonds): a few photos where a model (Claude) looked at the image and suggested a specific barrier. Unverified.</li>
+        <li><b>AI-suggested barriers</b> (purple diamonds): a few photos where an AI model looked at the image and suggested a specific barrier. Unverified.</li>
         <li><b>Severity:</b> High = a wheelchair user cannot pass. Medium = possible but difficult or unsafe. Low = inconvenient.</li>
         <li><b>OpenStreetMap-ready answers:</b> where a standard tag exists (<span class="tag">kerb</span>, <span class="tag">tactile_paving</span>, <span class="tag">wheelchair</span>, <span class="tag">lit</span>), the answer is stored as that tag. Verified points can then be added to OpenStreetMap.</li>
         <li><b>Street-level photos</b> come from Mapillary. They are context until someone marks a barrier in one.</li>
@@ -395,7 +395,7 @@ const BASES = {
 let base = "street"; BASES.street.addTo(map);
 const reportLayer = L.layerGroup().addTo(map);
 const mlyLayer = L.layerGroup();   // off by default; the AI street scan shows the same photos
-// AI-suggested barriers: a model (Claude) looked at Mapillary street photos and flagged possible barriers.
+// AI-suggested barriers: an AI model looked at Mapillary street photos and flagged possible barriers.
 // Nobody has checked them on the ground. They are NOT survey findings and are not counted anywhere.
 const AI_SUGGESTED = [
   { id:"1350591156368034",  lat:22.250102, lng:73.219607, cat:"obstacle", sev:"low", conf:"low", note:"An auto-rickshaw is parked on the raised paved strip beside the kerb." },

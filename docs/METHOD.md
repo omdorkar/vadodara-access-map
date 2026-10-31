@@ -11,7 +11,7 @@ A remote accessibility audit of Vadodara and its outskirts, with a small number 
 | **Field survey** (square pins) | Om's own photos, each credited | Eleven records. Type and severity are Om's judgement. In four of them the photo shows the setting but not the barrier itself, and the note says so. Kerb heights were not measured. |
 | **Documentation only** (grey, dotted) | Photos that do not show a footpath barrier (Canal Road) or were taken far from the city (Pavagadh Hill). | Context only. Not counted. |
 | **AI street scan** (small dots) | Mapillary's own computer vision on 721 street photos, plus a simple rule (tools/ai_scan.js) | Machine guesses. In a spot check of 12 "no footpath" dots, 8 were clearly right and 4 unclear. A footpath hidden behind parked cars is missed. Kerb ramps are almost never detected. |
-| **AI-suggested (unverified)** (purple, off by default) | Mapillary street photos that a model (Claude) looked at and flagged | Low. Nobody has checked these on the ground. The photos are side-on views from a moving car. |
+| **AI-suggested (unverified)** (purple, off by default) | Mapillary street photos that an AI model looked at and flagged | Low. Nobody has checked these on the ground. The photos are side-on views from a moving car. |
 | **Mapillary photos** (green dots) | 721 street-level images across the city, mostly highways | Real imagery, CC-BY-SA, but mostly not footpaths. |
 | **Already known in OSM / possible gaps** | OpenStreetMap tags | Other people's data. A "gap" means a missing tag, not a confirmed barrier. |
 
