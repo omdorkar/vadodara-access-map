@@ -28,7 +28,7 @@ For each barrier take **2 photos**: one **wide** (shows where it is) and one **c
 ## Also: record the route with the Mapillary app
 Separately from the barrier photos, walk each street once with the **Mapillary app** in capture mode. Hold the phone upright at chest height, facing forward, or clip it to a bike. It takes a geotagged photo every few metres. Upload when you're back on Wi-Fi.
 - This gives hundreds of street-level images of the route. They show up on the map's green "Mapillary photos" layer by themselves.
-- It is the same idea as the University of Alberta's wheelchair-mounted camera, and later it is the raw material for training a barrier detector.
+- Later it is the raw material for training a barrier detector.
 - Mapillary publishes uploads under CC-BY-SA and blurs faces and number plates automatically.
 
 ## Privacy and safety

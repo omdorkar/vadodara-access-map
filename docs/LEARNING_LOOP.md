@@ -1,8 +1,6 @@
 # The learning loop
 
-How the map learns to find barriers from photos nobody had to go out and take. Modelled on the University of
-Alberta Mobility Mapping / Click&Push approach: crowd reports + camera imagery + a detector that improves from
-confirmed labels. Everything runs on free services and open models; no field work is needed to keep it going.
+How the map learns to find barriers from photos nobody had to go out and take. Everything runs on free services and open models; no field work is needed to keep it going.
 
 ```
 open street photos ──> detector proposes ──> people check (label.html) ──> gold labels ──> detector refits

@@ -1,6 +1,6 @@
 # Vadodara Access Map
 
-A free, open-source map of physical-mobility barriers (broken or missing ramps, blocked footpaths, missing kerb cuts, no tactile paving, steps with no alternative) in Vadodara and its outskirts, India. It is a **remote audit** (street-level photos and OpenStreetMap data) plus a small set of photos taken by Om Dorkar. It is not a full survey: see [docs/METHOD.md](docs/METHOD.md) for what was and was not done. It was inspired by the University of Alberta Mobility Mapping Project.
+A free, open-source map of physical-mobility barriers (broken or missing ramps, blocked footpaths, missing kerb cuts, no tactile paving, steps with no alternative) in Vadodara and its outskirts, India. It is a **remote audit** (street-level photos and OpenStreetMap data) plus a small set of photos taken by Om Dorkar. It is not a full survey: see [docs/METHOD.md](docs/METHOD.md) for what was and was not done.
 
 <!-- Screenshot: add docs/screenshot.png once the survey photos are on the map. -->
 
@@ -13,12 +13,10 @@ Local news has reported for years that the city is hard to get around for people
 
 Those reports are now years old. This project asks a simple question: **what is it like today, street by street?** It answers with photos and locations anyone can check.
 
-The method is inspired by the University of Alberta's [Atlas / Click&Push](https://www.ualberta.ca/en/folio/2025/04/overcoming-obstacles.html) work. That team combines crowdsourced barrier reports with camera and GPS data, and is developing deep learning to detect barriers automatically. This project is a small, student-led version of the same idea, for one area of Vadodara.
-
 **Live map: https://omdorkar.github.io/vadodara-access-map/** · Built by Om Dorkar · OpenStreetMap: [Om Dorkar](https://www.openstreetmap.org/user/Om%20Dorkar)
 
 ## How the AI works
-Like the University of Alberta project, this map pairs people with machine vision, and the machine learns from the people. Full detail in [docs/LEARNING_LOOP.md](docs/LEARNING_LOOP.md).
+This map pairs people with machine vision, and the machine learns from the people. Full detail in [docs/LEARNING_LOOP.md](docs/LEARNING_LOOP.md).
 
 1. **Photos, no camera needed.** Street-level photos from Mapillary, Panoramax and geotagged Wikimedia Commons photos (all openly licensed), plus Om's own photos. [tools/learn/fetch_images.py](tools/learn/fetch_images.py).
 2. **Footpath rule.** Mapillary labels every photo (road, sidewalk, kerb, crossing...). [tools/scan_core.js](tools/scan_core.js) asks: is there a road, and is a footpath visible? Whole stretches of street are coloured green or red ([data/ai_streets.js](data/ai_streets.js)); a road with no photo stays uncoloured.
@@ -52,7 +50,7 @@ Everything city-specific is in [data/city.js](data/city.js): the name, the box t
 2. Move the map so the pin sits exactly on the barrier, or tap **Use my location**.
 3. Answer the short questions: severity, one detail question, an optional note and photo.
 
-Where OpenStreetMap has a standard tag, the answer is stored as that tag (`kerb=raised|lowered|flush`, `tactile_paving=no|incorrect`, `wheelchair=no|limited`, `lit=no`). Verified points can then be added to OpenStreetMap, for example with [MapComplete OnWheels](https://mapcomplete.org/onwheels), whose question design inspired this flow.
+Where OpenStreetMap has a standard tag, the answer is stored as that tag (`kerb=raised|lowered|flush`, `tactile_paving=no|incorrect`, `wheelchair=no|limited`, `lit=no`). Verified points can then be added to OpenStreetMap, for example with [MapComplete OnWheels](https://mapcomplete.org/onwheels).
 
 ## Run it
 Open `index.html` in a browser. There's no build step and nothing to install.
@@ -97,6 +95,9 @@ Visitor reports stay in their own browser until shared storage is switched on, a
 3. Shared, moderated storage for condition problems OSM doesn't map (broken ramps, blocked footpaths), so everyone sees each other's reports.
 4. Talk to wheelchair users and a local disability organisation; send a street-by-street report to the Vadodara Municipal Corporation.
 5. ~~A small ramp/obstacle detector trained only on suitably licensed photos.~~ Built as a learning loop (docs/LEARNING_LOOP.md): it proposes, people confirm, it refits weekly. Fine-tune a segmentation model once confirmed labels pass ~500.
+
+## Prior work
+The method follows the University of Alberta's [Atlas / Click&Push](https://www.ualberta.ca/en/folio/2025/04/overcoming-obstacles.html) project, which combines crowdsourced barrier reports with camera and GPS data. The reporting questions follow [MapComplete OnWheels](https://mapcomplete.org/onwheels).
 
 ## Licence
 Code: MIT ([LICENSE](LICENSE)). Survey data and photos: CC-BY-SA 4.0 ([LICENSE-DATA.md](LICENSE-DATA.md)). Third-party data keeps its own licence ([DATA_SOURCES.md](DATA_SOURCES.md)).
