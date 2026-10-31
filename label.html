@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Check the AI · Vadodara Access Map</title>
+<style>
+  :root { --bg:#fff; --fg:#1b1b1b; --muted:#666; --line:#ddd; --accent:#2e7d32; --warn:#c62828; --ai:#7b3fbf; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#141414; --fg:#eee; --muted:#aaa; --line:#333; } }
+  :root[data-theme="dark"] { --bg:#141414; --fg:#eee; --muted:#aaa; --line:#333; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.45 system-ui, sans-serif; }
+  header { padding:12px 16px; border-bottom:1px solid var(--line); display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; } header a { color:inherit; }
+  main { max-width:960px; margin:0 auto; padding:16px; }
+  .photo { position:relative; background:#000; border-radius:8px; overflow:hidden; aspect-ratio:4/3; }
+  .photo img { width:100%; height:100%; object-fit:contain; display:block; }
+  .meta { display:flex; gap:8px 16px; flex-wrap:wrap; color:var(--muted); font-size:14px; margin:8px 0; }
+  .chip { display:inline-block; padding:2px 8px; border-radius:12px; font-size:13px; background:var(--ai); color:#fff; }
+  .seed { display:flex; gap:12px; align-items:center; margin:10px 0; padding:10px; border:1px dashed var(--line); border-radius:8px; }
+  .seed img { width:120px; height:90px; object-fit:cover; border-radius:4px; }
+  .btns { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:8px; margin:12px 0; }
+  button { font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); cursor:pointer; text-align:left; }
+  button:hover { border-color:var(--fg); } button kbd { float:right; color:var(--muted); font-size:12px; }
+  button.yes { border-color:var(--accent); } button.no { border-color:var(--warn); }
+  .types { display:none; } .types.open { display:grid; }
+  .bar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:12px 0; font-size:14px; color:var(--muted); flex-wrap:wrap; }
+  .status { font-size:13px; color:var(--muted); min-height:1.3em; }
+  .box { border:1px solid var(--line); border-radius:8px; padding:12px; margin:12px 0; font-size:14px; }
+  input { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); width:100%; box-sizing:border-box; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Check the AI</h1>
+  <span class="status" id="count"></span>
+  <span style="flex:1"></span>
+  <a href="index.html">Map</a> · <a href="METRICS.md">Metrics</a> · <a href="https://github.com/omdorkar/vadodara-access-map">Code</a>
+</header>
+<main>
+  <p>The AI looked at openly licensed street photos and proposed what each shows. You decide whether it is right. Each answer is one vote; two agreeing votes make a confirmed label, and the detector retrains on confirmed labels every Monday. Keys: <b>Y</b> agree, <b>N</b> disagree, <b>U</b> can't tell, <b>S</b> not a street photo, <b>→</b> skip.</p>
+  <div class="box" id="setup"></div>
+  <div class="photo"><img id="img" alt="Street photo to check"></div>
+  <div class="meta" id="meta"></div>
+  <div class="seed" id="seed"></div>
+  <div class="btns" id="main">
+    <button class="yes" data-v="agree">Looks right <kbd>Y</kbd></button>
+    <button class="no" data-v="disagree">Looks wrong: pick what it is <kbd>N</kbd></button>
+    <button data-v="unsure">Can't tell <kbd>U</kbd></button>
+    <button data-v="not_street">Not a street photo <kbd>S</kbd></button>
+    <button data-v="skip">Skip <kbd>→</kbd></button>
+  </div>
+  <div class="btns types" id="types"></div>
+  <div class="bar"><span id="progress"></span><span><button data-act="export">Export my votes (JSON)</button></span></div>
+  <p class="status">Photos: Mapillary and Panoramax (CC-BY-SA), Wikimedia Commons (CC). Your votes are published under CC-BY-SA 4.0 as part of the open dataset. No personal data is stored; a random id in this browser stops double counting.</p>
+</main>
+<script src="data/vocab.js"></script>
+<script src="data/ai_barriers.js"></script>
+<script>
+// Same settings as index.html. Fill these in once Supabase is set up (docs/SHARED_REPORTS.md); until then votes stay in this browser and can be exported.
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+const supaOn = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+const LABELS = Object.assign({ no_footpath:{label:"No footpath at all"}, ok_footpath:{label:"Footpath present, no barrier"}, open_road:{label:"Open road / highway"} }, window.VAM_VOCAB.CATS);
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let voter = lsGet("vam_voter", null); if (!voter) { voter = Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, "0")).join(""); lsSet("vam_voter", voter); }
+const mine = lsGet("vam_checks", {});
+const D = window.AI_BARRIERS || { rows: [] };
+// Queue: proposals with a label, least-voted first in a fixed shuffle so different people see different photos.
+const seed = parseInt(voter.slice(0, 6), 16);
+const rows = D.rows.filter(r => r[6] && r[6] !== "not_street").map(r => ({ id:r[0], lat:r[1], lng:r[2], ts:r[3], src:r[4], page:r[5], label:r[6], prob:r[7], pfp:r[8], seedFile:r[9], sim:r[10], seedLabel:r[11], sw:r[12], rd:r[13], rule:r[14], model:r[15], img:r[16] }))
+  .sort((a, b) => ((seed * 31 + a.id.length) % 97) - ((seed * 31 + b.id.length) % 97) || a.id.localeCompare(b.id));
+// Photos that look like a confirmed barrier photo go first: they are the detector's best leads.
+const lead = r => (LABELS[r.seedLabel] && r.seedLabel !== "no_footpath" && r.seedLabel !== "ok_footpath" && r.seedLabel !== "open_road" && r.sim >= 0.75) ? 0 : 1;
+rows.sort((a, b) => lead(a) - lead(b));
+let queue = rows.filter(r => !mine[r.id]); let cur = null;
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const MAPILLARY_TOKEN = "MLY|29011422828469872|1bb408ddfd46eb46254d2ee409d054b9";   // public client token, same as index.html
+async function imgUrl(r) {
+  if (r.img) return r.img;
+  if (r.src === "mapillary") {
+    try { const j = await (await fetch("https://graph.mapillary.com/" + r.id.replace(/^mapillary_/, "") + "?fields=thumb_1024_url&access_token=" + encodeURIComponent(MAPILLARY_TOKEN))).json(); if (j.thumb_1024_url) return j.thumb_1024_url; } catch (e) {}
+  }
+  return "ai_cache/img/" + r.id + ".jpg";   // local run only
+}
+function describe(r) {
+  const parts = [];
+  if (lead(r) === 0) parts.push("<b>Looks like a confirmed barrier photo</b>");
+  if (r.label) parts.push("The AI says: <b>" + esc((LABELS[r.label] || {}).label || r.label) + "</b>" + (r.prob ? " (" + Math.round(r.prob * 100) + "% sure)" : ""));
+  if (r.pfp != null) parts.push("Footpath present: " + Math.round(r.pfp * 100) + "%");
+  if (r.sw != null) parts.push("Sidewalk pixels " + (r.sw * 100).toFixed(1) + "%, road " + (r.rd * 100).toFixed(1) + "%");
+  if (r.rule) parts.push("Footpath rule: " + { F:"footpath seen", N:"built-up, none seen", O:"open road" }[r.rule]);
+  return parts;
+}
+function show() {
+  cur = queue[0];
+  document.getElementById("count").textContent = Object.keys(mine).length + " voted · " + queue.length + " left";
+  if (!cur) { document.getElementById("img").removeAttribute("src"); document.getElementById("meta").innerHTML = "<b>All done. Thank you.</b> Export your votes or come back after Monday's scan."; document.getElementById("seed").innerHTML = ""; return; }
+  const img = document.getElementById("img"), me = cur; img.removeAttribute("src"); img.alt = "Loading photo…";
+  imgUrl(me).then(u => { if (cur === me) { img.src = u; img.alt = "Street photo to check"; } });
+  const when = cur.ts ? new Date(cur.ts).toISOString().slice(0, 10) : "?";
+  document.getElementById("meta").innerHTML = '<span class="chip">' + esc(cur.src) + '</span><span>Taken ' + when + '</span><span>' + cur.lat.toFixed(5) + ', ' + cur.lng.toFixed(5) + '</span>' +
+    (cur.page ? '<a href="' + esc(cur.page) + '" target="_blank" rel="noopener">source</a>' : '') + '<a href="index.html#' + cur.lat + ',' + cur.lng + '" target="_blank" rel="noopener">on the map</a><br>' + describe(cur).join(" · ");
+  const isSeedPhoto = !/^(mapillary|panoramax|commons)_/.test(cur.seedFile);
+  document.getElementById("seed").innerHTML = '<img src="' + (isSeedPhoto ? (cur.seedLabel === "no_barrier" ? "photos/context/" : "photos/web/") + esc(cur.seedFile) : "ai_cache/img/" + esc(cur.seedFile) + ".jpg") + '" alt="">' +
+    '<div>Most similar confirmed photo (' + Math.round(cur.sim * 100) + '% similar): <b>' + esc((LABELS[cur.seedLabel] || { label: cur.seedLabel === "no_barrier" ? "No barrier (documentation photo)" : cur.seedLabel }).label) + '</b>' + (isSeedPhoto ? ' from the field survey' : ' from a confirmed vote') + '</div>';
+  document.getElementById("types").classList.remove("open");
+  document.getElementById("progress").textContent = "Model " + cur.model + " · detector trained on " + (D.gold || 0) + " confirmed labels";
+}
+async function vote(label) {
+  if (!cur) return;
+  const rec = { image_id: cur.id, label, shown_label: cur.label, model: cur.model, voter };
+  mine[cur.id] = { label, shown: cur.label, at: new Date().toISOString() }; lsSet("vam_checks", mine);
+  queue.shift(); show();
+  if (!supaOn) return;
+  try {
+    await fetch(SUPABASE_URL + "/rest/v1/checks?on_conflict=image_id,voter", { method: "POST", headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY, "Content-Type": "application/json", Prefer: "resolution=merge-duplicates" }, body: JSON.stringify(rec) });
+  } catch (e) { console.warn("vote not shared", e); }
+}
+document.getElementById("types").innerHTML = Object.keys(LABELS).map((k, i) => '<button data-type="' + k + '">' + esc(LABELS[k].label) + (LABELS[k].hint ? ' <small style="color:var(--muted)">' + esc(LABELS[k].hint) + '</small>' : '') + '<kbd>' + (i + 1) + '</kbd></button>').join("");
+document.body.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.v === "agree") return vote(cur.label);
+  if (b.dataset.v === "disagree") return document.getElementById("types").classList.toggle("open");
+  if (b.dataset.v === "skip") { queue.push(queue.shift()); return show(); }
+  if (b.dataset.v) return vote(b.dataset.v);
+  if (b.dataset.type) return vote(b.dataset.type);
+  if (b.dataset.act === "export") {
+    const checks = Object.entries(mine).map(([image_id, v]) => ({ image_id, label: v.label, shown_label: v.shown, voter, at: v.at }));
+    const blob = new Blob([JSON.stringify({ exported: new Date().toISOString(), license: "CC-BY-SA 4.0", checks }, null, 1)], { type: "application/json" });
+    const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "checks_" + voter.slice(0, 6) + ".json" }); a.click();
+  }
+});
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  const k = e.key.toLowerCase();
+  if (k === "y") vote(cur && cur.label); else if (k === "n") document.getElementById("types").classList.toggle("open");
+  else if (k === "u") vote("unsure"); else if (k === "s") vote("not_street"); else if (e.key === "ArrowRight") { queue.push(queue.shift()); show(); }
+  else if (/^[1-9]$/.test(k) || k === "0") { const t = Object.keys(LABELS)[(k === "0" ? 10 : +k) - 1]; if (t && document.getElementById("types").classList.contains("open")) vote(t); }
+});
+document.getElementById("setup").innerHTML = supaOn ? "Votes are shared live." : "<b>Votes stay in this browser</b> until Supabase is set up in label.html (see docs/LEARNING_LOOP.md). Use <i>Export my votes</i> and drop the file in <code>labels/checks_export/</code> so Monday's run counts it.";
+show();
+</script>
+</body>
+</html>

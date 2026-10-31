@@ -1,0 +1,61 @@
+# Weekly learning loop. After the Monday footpath scan (ai-scan.yml), this collects open street photos,
+# turns people's votes (label.html) into gold labels, re-fits the detector, re-scores every photo,
+# rewrites METRICS.md and the open dataset, and commits the results.
+# Secrets (Settings -> Secrets -> Actions): MAPILLARY_TOKEN (optional; falls back to the public token in index.html),
+# SUPABASE_URL + SUPABASE_KEY (anon key; optional, votes exported into labels/checks_export/ are used too).
+name: AI learning loop
+
+on:
+  schedule:
+    - cron: "30 4 * * 1"   # Mondays 10:00 India, two hours after the footpath scan
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-learn
+  cancel-in-progress: false
+
+jobs:
+  learn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Restore photo, embedding and model caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            ai_cache
+            ~/.cache/huggingface
+          key: ai-learn-${{ github.run_id }}
+          restore-keys: ai-learn-
+      - run: pip install -r tools/learn/requirements.txt
+      - name: Collect open street photos
+        run: python -I tools/learn/fetch_images.py
+        env:
+          MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}
+      - name: Score photos (gold labels -> detector -> proposals -> METRICS.md)
+        run: python -I tools/learn/score_images.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      - name: Export the open dataset
+        run: python -I tools/learn/export_dataset.py
+      - name: Publish if the results changed
+        run: |
+          files="data/ai_barriers.js METRICS.md labels/gold.csv dataset"
+          if git status --porcelain -- $files | grep -q .; then
+            git config user.name "ai-learn bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add $files
+            git commit -m "AI learning loop: weekly update"
+            git push
+          else
+            echo "No change."
+          fi

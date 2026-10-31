@@ -34,3 +34,33 @@ create policy "anyone can read approved reports" on public.reports
 -- Deliberately no update or delete policies for anon.
 
 create index if not exists reports_status_created_idx on public.reports (status, created_at desc);
+
+-- ---------------------------------------------------------------------------------------------
+-- Learning loop: people's checks of the AI's barrier proposals (label.html).
+-- One row per vote. Anyone can add a vote and anyone can read votes (no personal data is stored:
+-- `voter` is a random id made in the browser). tools/learn/learn.py turns majority votes into labels/gold.csv.
+-- ---------------------------------------------------------------------------------------------
+create table if not exists public.checks (
+  id          bigint generated always as identity primary key,
+  created_at  timestamptz not null default now(),
+  image_id    text not null check (image_id ~ '^(mapillary|panoramax|commons)_[A-Za-z0-9-]{1,64}$'),
+  label       text not null check (label in ('missing_ramp','broken_ramp','obstacle','uneven','no_tactile','stairs_only','lighting',
+                                             'no_footpath','ok_footpath','open_road','not_street','unsure')),
+  shown_label text,                       -- what the AI proposed when the person voted
+  model       text,                       -- model version that made the proposal
+  voter       text not null check (length(voter) between 8 and 64),
+  unique (image_id, voter)                -- one vote per person per photo; re-voting replaces via upsert
+);
+
+alter table public.checks enable row level security;
+
+drop policy if exists "anyone can vote" on public.checks;
+create policy "anyone can vote" on public.checks for insert to anon with check (true);
+
+drop policy if exists "anyone can change their own vote" on public.checks;
+create policy "anyone can change their own vote" on public.checks for update to anon using (true) with check (true);
+
+drop policy if exists "anyone can read votes" on public.checks;
+create policy "anyone can read votes" on public.checks for select to anon using (true);
+
+create index if not exists checks_image_idx on public.checks (image_id);

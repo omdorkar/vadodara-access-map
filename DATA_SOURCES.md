@@ -31,3 +31,13 @@ Every source used on the site, with its licence and how it is used. Anything not
 - The Mapillary and OpenStreetMap layers now cover Vadodara and its near outskirts: 22.24–22.40 N, 73.10–73.27 E. The dashed outline on the map still shows the original core area.
 - Mapillary: 721 street-level images in that box (the API allows 0.01 square degrees per request, so the map asks cell by cell, 0.05 degrees each). Most are in the north and east; the south-west has almost none.
 - OpenStreetMap, same box: 62 wheelchair tags, 1 `tactile_paving` tag and no `kerb` tags among 166 mapped elements. Kerb height and tactile paving are almost entirely unmapped.
+
+## Added for the learning loop (tools/learn/)
+| Source | Used for | Licence |
+|---|---|---|
+| [Panoramax](https://panoramax.xyz) street-level photos in the city box | Photos to score and label | CC-BY-SA 4.0 (per image, checked from the API) |
+| [Wikimedia Commons](https://commons.wikimedia.org) geotagged photos in the city box | Photos to score and label | Only CC-licensed or public-domain files are downloaded; the licence of each is recorded in `ai_cache/images.json` and `dataset/proposals.csv` |
+| Mapillary 1024 px thumbnails of already-judged photos | Photos to score and label | CC-BY-SA 4.0 |
+| [OpenCLIP ViT-B/32 (laion2b)](https://github.com/mlfoundations/open_clip) model weights | Image embeddings | MIT (code), weights trained on LAION-2B |
+| [nvidia/segformer-b0-finetuned-cityscapes-1024-1024](https://huggingface.co/nvidia/segformer-b0-finetuned-cityscapes-1024-1024) | Road and sidewalk pixel share | NVIDIA Source Code License (non-commercial); replace before any commercial use |
+| Votes from label.html | Training labels | CC-BY-SA 4.0, no personal data (random browser id only) |

@@ -3,3 +3,5 @@ photos/notes.csv
 drafts/
 .DS_Store
 ai_cache/
+.venv/
+__pycache__/

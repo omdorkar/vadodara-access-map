@@ -235,7 +235,7 @@
       </ul>
       <p class="muted" style="color:var(--muted)">Built by Om Dorkar. Open source on <a href="https://github.com/omdorkar/vadodara-access-map" target="_blank" rel="noopener">GitHub</a>.</p>
       <p id="osmContrib" hidden></p>
-      <p><a href="report.html">Printable street report</a> of the field survey.</p>
+      <p><a href="report.html">Printable street report</a> of the field survey. <a href="label.html">Check the AI</a>: confirm or correct its proposals so the detector learns.</p>
     </section>
     <section class="tab-panel" id="t-why" hidden>
       <p>Local news has reported for years that the city is hard to get around for people with disabilities:</p>
@@ -252,7 +252,7 @@
         <li><b>Om's photos:</b> taken in Vadodara and placed by hand from the location Om gave. Type, severity and notes are Om's. Om could not do a systematic walk, so there is no count of places checked.</li>
         <li><b>AI street scan:</b> Mapillary runs semantic segmentation on every uploaded photo (it labels road, footpath, kerb, building, crossing and more). <code>tools/ai_scan.js</code> asks of each daytime photo: is there a road, and is a footpath visible? Built-up streets with none are red. Night photos and photos with no road are not judged. Anyone can re-run it as new photos are added.</li>
         <li><b>Checking the AI:</b> in a spot check of 12 red dots, 8 clearly had no footpath and 4 were unclear. The AI almost never detects kerb ramps, so crossings are marked "check for a ramp", not "no ramp".</li>
-        <li><b>AI-suggested barriers</b> (purple diamonds): a few photos where an AI model looked at the image and suggested a specific barrier. Unverified.</li>
+        <li><b>AI-suggested barriers</b> (purple diamonds): street photos where a detector, trained on the confirmed labels, proposes a barrier type. Unverified. <a href="label.html">Check them</a> and it learns.</li>
         <li><b>Severity:</b> High = a wheelchair user cannot pass. Medium = possible but difficult or unsafe. Low = inconvenient.</li>
         <li><b>OpenStreetMap-ready answers:</b> where a standard tag exists (<span class="tag">kerb</span>, <span class="tag">tactile_paving</span>, <span class="tag">wheelchair</span>, <span class="tag">lit</span>), the answer is stored as that tag. Verified points can then be added to OpenStreetMap.</li>
         <li><b>Street-level photos</b> come from Mapillary. They are context until someone marks a barrier in one.</li>
@@ -290,6 +290,7 @@
 <script src="data/survey.js"></script>
 <script src="data/ai_scan.js"></script>
 <script src="data/ai_streets.js"></script>
+<script src="data/ai_barriers.js"></script>
 <script>
 // ---------- Settings: each feature switches on when its value is filled in ----------
 // Mapillary client token (starts with MLY|). Designed for public browser use. Can also be entered under Layers & filters.
@@ -395,18 +396,17 @@ const BASES = {
 let base = "street"; BASES.street.addTo(map);
 const reportLayer = L.layerGroup().addTo(map);
 const mlyLayer = L.layerGroup();   // off by default; the AI street scan shows the same photos
-// AI-suggested barriers: an AI model looked at Mapillary street photos and flagged possible barriers.
-// Nobody has checked them on the ground. They are NOT survey findings and are not counted anywhere.
-const AI_SUGGESTED = [
-  { id:"1350591156368034",  lat:22.250102, lng:73.219607, cat:"obstacle", sev:"low", conf:"low", note:"An auto-rickshaw is parked on the raised paved strip beside the kerb." },
-  { id:"1417097023346174",  lat:22.249648, lng:73.219252, cat:"obstacle", sev:"low", conf:"low", note:"Scooters and people use the raised paved strip, which looks narrow and cluttered." },
-  { id:"25624681363839756", lat:22.249718, lng:73.219301, cat:"obstacle", sev:"low", conf:"low", note:"A heap of earth and rubbish spills onto the raised roadside strip." },
-  { id:"1207180784713779",  lat:22.250343, lng:73.219794, cat:"uneven",   sev:"med", conf:"low", note:"Raised brick-paved strip with a broken, lifted edge next to the carriageway." },
-  { id:"1441466834009943",  lat:22.250419, lng:73.219846, cat:"uneven",   sev:"med", conf:"low", note:"Paved strip with a broken edge and loose bricks." },
-  { id:"33310089888604672", lat:22.250495, lng:73.219894, cat:"uneven",   sev:"med", conf:"low", note:"Paving bricks are broken and scattered along the strip." },
-  { id:"826289893569849",   lat:22.250630, lng:73.219970, cat:"uneven",   sev:"med", conf:"low", note:"Loose bricks and broken paving along the strip." },
-  { id:"1824670314698427",  lat:22.250690, lng:73.220010, cat:"uneven",   sev:"low", conf:"low", note:"Broken kerb edge with debris on the strip." }
-];
+// AI-suggested barriers (data/ai_barriers.js, made by tools/learn/score_images.py). A detector trained on Om's labelled
+// photos, people's votes (label.html) and the footpath rule proposes a barrier type for openly licensed street photos.
+// Only proposals of a barrier type with probability >= AI_MIN_PROB are shown. They are NOT findings and are not counted.
+// A photo is also proposed when it looks like one of Om's confirmed barrier photos (cosine similarity >= AI_MIN_SIM).
+const AI_MIN_PROB = 0.5, AI_MIN_SIM = 0.75;
+const AIB = window.AI_BARRIERS || { rows:[], gold:0, model:"" };
+const AI_SUGGESTED = AIB.rows.filter(r => r[6] !== "not_street" && ((CATS[r[6]] && (r[7] || 0) >= AI_MIN_PROB) || (CATS[r[11]] && (r[10] || 0) >= AI_MIN_SIM))).map(r => ({
+  id:r[0], src:r[4], page:r[5], lat:r[1], lng:r[2], ts:r[3], cat:CATS[r[6]] ? r[6] : r[11], prob:r[7], pfp:r[8], seedFile:r[9], sim:r[10], seedLabel:r[11], sw:r[12], rd:r[13], rule:r[14], model:r[15], img:r[16],
+  sev:"med", conf:(r[7] || 0) >= 0.8 ? "medium" : "low",
+  note:(CATS[r[6]] ? "Detector "+r[15]+" proposed this type with "+Math.round(100*(r[7]||0))+"% probability. " : "This photo is "+Math.round(100*(r[10]||0))+"% similar to a confirmed field-survey photo of this barrier type ("+r[9]+"). ")+(r[8] != null ? "Footpath present: "+Math.round(100*r[8])+"%." : "")
+}));
 const aiLayer = L.layerGroup();   // off by default
 
 // ---------- AI street scan (data/ai_scan.js, made by tools/ai_scan.js from Mapillary's computer vision) ----------
@@ -517,7 +517,7 @@ AI_SUGGESTED.forEach(r => L.marker([r.lat,r.lng], { icon:aiIcon(r), title:"AI-su
 async function showAi(r){
   const cat = CATS[r.cat], sev = SEV[r.sev];
   openPanel(
-    '<div id="aiPhoto" class="hero"><figcaption>Loading the Mapillary photo…</figcaption></div>'+
+    '<div id="aiPhoto" class="hero"><figcaption>Loading the photo…</figcaption></div>'+
     '<h2>'+cat.label+'</h2><span class="chip ai">AI-suggested &middot; unverified</span>'+
     '<dl class="rows">'+
       '<div><dt>Severity guess</dt><dd><span class="sev" style="background:'+sev.hex+'"></span><b>'+sev.label+'</b> &middot; low confidence</dd></div>'+
@@ -525,17 +525,21 @@ async function showAi(r){
       '<div><dt>Location</dt><dd>'+coords(r.lat,r.lng)+' <small style="color:var(--muted)">(where the photo was taken)</small></dd></div>'+
     '</dl>'+
     '<div class="callout"><b>Not verified</b>A computer program looked at this street-level photo and guessed there may be a barrier. Nobody has checked it on the ground. It is not a survey finding and is not counted in the totals. The photo is a side-on view from a moving car, so it can easily be wrong.</div>'+
-    voteButtons(r.id)+
-    '<div class="actions"><button class="btn" data-act="zoomTo">Zoom here</button>'+
-    '<a class="btn" href="'+mlyLink(r.id)+'" target="_blank" rel="noopener">Open in Mapillary</a></div>',
+    '<div class="actions"><a class="btn primary" href="label.html" target="_blank" rel="noopener">Check this and others</a><button class="btn" data-act="zoomTo">Zoom here</button>'+
+    (r.page ? '<a class="btn" href="'+esc(r.page)+'" target="_blank" rel="noopener">Open source photo ('+esc(r.src)+')</a>' : '')+'</div>',
     { kind:"feature", r:{ ...r, lat:r.lat, lng:r.lng } });
+  const el = $("aiPhoto");
+  if (r.src !== "mapillary") {
+    if (el) el.innerHTML = r.img ? '<a href="'+esc(r.page)+'" target="_blank" rel="noopener"><img src="'+safeUrl(r.img)+'" alt="Street photo" loading="lazy"></a><figcaption>'+esc(r.src)+(r.ts ? ' &middot; '+fmtDate(r.ts) : '')+' &middot; open licence, see source</figcaption>' : '<figcaption>Open the source photo link.</figcaption>';
+    return;
+  }
+  const mid = r.id.replace(/^mapillary_/, "");
   try {
-    const res = await fetch("https://graph.mapillary.com/"+r.id+"?fields=thumb_1024_url,captured_at,creator&access_token="+encodeURIComponent(MAPILLARY_TOKEN || lsGet("vam_mly","")));
+    const res = await fetch("https://graph.mapillary.com/"+mid+"?fields=thumb_1024_url,captured_at,creator&access_token="+encodeURIComponent(MAPILLARY_TOKEN || lsGet("vam_mly","")));
     const j = await res.json();
-    const el = $("aiPhoto");
-    if (el && j.thumb_1024_url) el.innerHTML = '<a href="'+mlyLink(r.id)+'" target="_blank" rel="noopener"><img src="'+safeUrl(j.thumb_1024_url)+'" alt="Mapillary street photo" loading="lazy"></a><figcaption>&copy; '+esc((j.creator && j.creator.username) || "Mapillary contributor")+(j.captured_at ? ' &middot; '+fmtDate(j.captured_at) : '')+' via Mapillary &middot; CC-BY-SA 4.0</figcaption>';
-    else if (el) el.innerHTML = '<figcaption>Photo not available. Use "Open in Mapillary".</figcaption>';
-  } catch(e) { const el = $("aiPhoto"); if (el) el.innerHTML = '<figcaption>Could not load the photo. Use "Open in Mapillary".</figcaption>'; }
+    if (el && j.thumb_1024_url) el.innerHTML = '<a href="'+mlyLink(mid)+'" target="_blank" rel="noopener"><img src="'+safeUrl(j.thumb_1024_url)+'" alt="Mapillary street photo" loading="lazy"></a><figcaption>&copy; '+esc((j.creator && j.creator.username) || "Mapillary contributor")+(j.captured_at ? ' &middot; '+fmtDate(j.captured_at) : '')+' via Mapillary &middot; CC-BY-SA 4.0</figcaption>';
+    else if (el) el.innerHTML = '<figcaption>Photo not available. Use the source link.</figcaption>';
+  } catch(e) { if (el) el.innerHTML = '<figcaption>Could not load the photo. Use the source link.</figcaption>'; }
 }
 const gapLayer = L.layerGroup();   // off by default; switched on from Layers
 const knownLayer = L.layerGroup().addTo(map);
@@ -669,7 +673,7 @@ function showLayers(keepScroll){
     '<p class="status">Mapillary\'s computer vision checked '+SCAN.length+' street photos. On built-up streets in daylight, a footpath was detected in '+scanCount("F")+' of '+(scanCount("F")+scanCount("N"))+' ('+Math.round(100*scanCount("F")/Math.max(1,(scanCount("F")+scanCount("N"))))+'%). Green: footpath seen. Red: none seen. Grey: open road. Purple ring: zebra crossing to check for a ramp. Machine guesses, unverified.</p>'+
     scanSummaryHtml()+
     toggleRow("ov","ai",'<div class="pin" style="--c:#7b3fbf;width:20px;height:20px;border-radius:4px;border-style:dashed">'+icon("uneven")+'</div>',"AI-suggested (unverified)",AI_SUGGESTED.length,state.overlays.ai)+
-    '<p class="status">Possible barriers a computer program spotted in Mapillary street photos. Not checked on the ground, not counted as findings.</p>'+
+    '<p class="status">Barrier types proposed by a detector ('+esc(AIB.model)+') over '+AIB.rows.length+' openly licensed street photos, trained on '+(AIB.gold||0)+' human-confirmed labels. Not checked on the ground, not counted as findings. <a href="label.html">Help check them</a> &middot; <a href="METRICS.md">accuracy</a>.</p>'+
     '<h3>OpenStreetMap</h3>'+
     toggleRow("ov","known",'<span class="swatch"><svg width="22" height="14"><circle cx="5" cy="7" r="4" fill="#2e7d32" stroke="#fff" stroke-width="1.5"/><circle cx="11" cy="7" r="4" fill="#e08600" stroke="#fff" stroke-width="1.5"/><circle cx="17" cy="7" r="4" fill="#c62828" stroke="#fff" stroke-width="1.5"/></svg></span>',"Already known in OSM",state.knownCount,state.overlays.known)+
     '<p class="status">Places and kerbs where OSM mappers recorded wheelchair access, kerb height or tactile paving. Green accessible, orange limited, red not accessible.</p>'+
